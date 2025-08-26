@@ -103,6 +103,7 @@ The server will start at `http://localhost:8000`
 ### Health Check
 
 -   **Health endpoint**: `http://localhost:8000/health`
+-   **Configuration test**: `http://localhost:8000/config/test`
 
 ## 🔄 Verification Flow
 
@@ -208,13 +209,48 @@ pytest --cov=app
 
 ### Environment Variables
 
-Create a `.env` file for local development:
+1. **Set up environment (recommended):**
 
-```env
-DATABASE_URL=your_database_url
-OPENAI_API_KEY=your_openai_key
-SCRAPING_API_KEY=your_scraping_key
-```
+    ```bash
+    python setup_env.py
+    ```
+
+    **Or manually copy the template:**
+
+    ```bash
+    cp env.example .env
+    ```
+
+2. **Configure your environment variables in `.env`:**
+
+    ```env
+    # Supabase Configuration (Required)
+    SUPABASE_URL=https://your-project-id.supabase.co
+    SUPABASE_ANON_KEY=your-supabase-anon-key
+    SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+
+    # OpenAI API (Required for RAG Pipeline)
+    OPENAI_API_KEY=your-openai-api-key
+
+    # Security (Required)
+    SECRET_KEY=your-secret-key
+
+    # Optional: External APIs
+    NEWS_API_KEY=your-news-api-key
+    FACT_CHECK_API_KEY=your-fact-check-api-key
+    ```
+
+3. **Get your Supabase credentials:**
+
+    - Go to [Supabase Dashboard](https://supabase.com/dashboard)
+    - Create a new project or select existing one
+    - Go to Settings → API
+    - Copy the Project URL and API keys
+
+4. **Get your OpenAI API key:**
+    - Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+    - Create a new API key
+    - Copy the key to your `.env` file
 
 <!-- ## 📝 License
 
