@@ -216,10 +216,10 @@ OPENAI_API_KEY=your_openai_key
 SCRAPING_API_KEY=your_scraping_key
 ```
 
-## 📝 License
+<!-- ## 📝 License
 
-[Add your license information here]
+[Add your license information here] -->
 
-## 🤝 Contributing
+<!-- ## 🤝 Contributing
 
-[Add contribution guidelines here]
+[Add contribution guidelines here] -->
