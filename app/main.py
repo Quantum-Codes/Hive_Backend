@@ -1,9 +1,11 @@
 from fastapi import FastAPI
+from app.core.config import settings, is_development
 
 app = FastAPI(
-    title="Hive Backend",
+    title=settings.app_name,
     description="A Reddit-like app with verification system",
-    version="1.0.0"
+    version=settings.app_version,
+    debug=settings.debug
 )
 
 @app.get("/")
@@ -13,3 +15,14 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "hive-backend"}
+
+@app.get("/config/test")
+async def test_config():
+    """Test endpoint to verify configuration is working."""
+    return {
+        "app_name": settings.app_name,
+        "environment": settings.environment,
+        "debug": settings.debug,
+        "supabase_configured": bool(settings.supabase.url and settings.supabase.anon_key),
+        "openai_configured": bool(settings.openai.api_key),
+    }
