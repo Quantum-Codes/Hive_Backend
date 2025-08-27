@@ -25,12 +25,14 @@ class WebScraper:
         # detect base url
         if url.startswith("https://www.indiatoday.in/"):
             return self._indiatoday_webscrape(url)
+        elif url.startswith("https://www.livemint.com/"):
+            return self._livemint_webscrape(url)
         else:
             raise ValueError("Site not allowed")
 
 
     def _indiatoday_webscrape(self, url):
-
+        
         response = requests.get(url)
         if response.status_code != 200:
             raise ValueError("Failed to retrieve content")
@@ -66,3 +68,16 @@ class WebScraper:
             date_published=time_posted,
             content=articles
         )
+
+    def _livemint_webscrape(self, url):
+
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise ValueError("Failed to retrieve content")
+
+        soup = bs4.BeautifulSoup(response.content, "html5lib")
+        # div#__next -> div.containerNew -> div.midSec -> div.storyPage_storyBox__9iWpG
+        content_body = soup.body.find("div", id="__next").find("div", class_="containerNew").find("div", class_="midSec").find("div", class_="storyPage_storyBox__9iWpG")
+
+        
+        
