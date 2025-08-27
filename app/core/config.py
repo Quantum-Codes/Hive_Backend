@@ -13,7 +13,8 @@ TASK: Configuration system implementation with Supabase integration
 
 import os
 from typing import Optional, List
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings
+from pydantic import validator
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
