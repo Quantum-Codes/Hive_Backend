@@ -13,7 +13,7 @@ TASK: Configuration system implementation with Supabase integration
 
 import os
 from typing import Optional, List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import validator
 from dotenv import load_dotenv
 
@@ -176,10 +176,13 @@ class Settings(BaseSettings):
             return False
         return v
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    # Pydantic v2 configuration: read from .env and ignore unrelated env keys
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 # Create global settings instance
 settings = Settings()
