@@ -119,12 +119,20 @@ class VerificationRAGPipeline:
         prompt = (
             "You are a fact verification assistant. Classify the claim based on the context and answer. "
             f"Choose one of: {', '.join(label_options)}.\n"
-            "Return a JSON object with keys: label, confidence (0-1), rationale.\n"
+            "Return ONLY a compact JSON object with keys: label, confidence (0-1), rationale. "
+            "Do not include code fences, backticks, or any extra prose.\n"
             f"Claim: {query}\n"
             f"Answer: {answer}\n"
             f"Context: {context_text}"
         )
-        resp = self._llm.generate_content(prompt)
+        resp = self._llm.generate_content(
+            prompt,
+            generation_config={
+                "temperature": self._temperature,
+                "max_output_tokens": self._max_tokens,
+                "response_mime_type": "application/json",
+            },
+        )
         text = getattr(resp, "text", None)
         if not text and hasattr(resp, "candidates") and resp.candidates:
             try:
@@ -138,17 +146,45 @@ class VerificationRAGPipeline:
         parsed_conf: float = 0.5
         rationale: str = resp_text
 
+        def _extract_json_block(s: str):
+            try:
+                return json.loads(s)
+            except Exception:
+                pass
+            # Strip common fences
+            if "```" in s:
+                s2 = s.replace("```json", "```")
+                parts = s2.split("```")
+                for seg in parts:
+                    seg = seg.strip()
+                    if seg.startswith("{") and seg.endswith("}"):
+                        try:
+                            return json.loads(seg)
+                        except Exception:
+                            continue
+            # Fallback: first {...}
+            start = s.find("{")
+            end = s.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                candidate = s[start:end+1]
+                try:
+                    return json.loads(candidate)
+                except Exception:
+                    pass
+            return None
+
         try:
-            data = json.loads(resp_text)
-            label_str = str(data.get("label", "other")).lower()
-            # Normalize to enum
-            for e in RagResponse:
-                if e.value.lower() == label_str:
-                    parsed_label = e
-                    break
-            conf = float(data.get("confidence", 0.5))
-            parsed_conf = max(0.0, min(1.0, conf))
-            rationale = str(data.get("rationale", rationale))
+            data = _extract_json_block(resp_text) or {}
+            if data:
+                label_str = str(data.get("label", "other")).lower()
+                # Normalize to enum
+                for e in RagResponse:
+                    if e.value.lower() == label_str:
+                        parsed_label = e
+                        break
+                conf = float(data.get("confidence", 0.5))
+                parsed_conf = max(0.0, min(1.0, conf))
+                rationale = str(data.get("rationale", rationale))
         except Exception:
             # Keep defaults if parsing fails
             pass
@@ -165,9 +201,14 @@ class VerificationRAGPipeline:
                 "reason": "No content provided for verification",
             }
 
-        # Use the post content itself as the claim; build corpus from provided context + post content
+        # Use the post content itself as the claim; build corpus strictly from provided context (no leakage of claim)
         claim = request.post_content
-        corpus_inputs = list(request.context or []) + [request.post_content]
+        # Ensure prior runs didn't persist the claim into the vector store
+        try:
+            self._collection.delete(where_document={"$contains": claim})
+        except Exception:
+            pass
+        corpus_inputs = list(request.context or [])
         self._build_corpus(contents=corpus_inputs, summary=None)
         retrieved = self._retrieve(query=claim, k=top_k)
         answer = self._generate_answer(query=claim, context=retrieved)
