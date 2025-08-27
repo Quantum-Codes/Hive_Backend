@@ -35,7 +35,6 @@ class WebScraper:
         if response.status_code != 200:
             raise ValueError("Failed to retrieve content")
 
-        # print(response.content)
         soup = bs4.BeautifulSoup(response.content, "html5lib") # to fix broken tags returned by indiatoday
         # body -> div#__next -> div#main -> div.temp__container -> div.temp__layout -> div.content__section  -> main
         div_main = soup.body.find("div", id="__next").find("div", id="main")
@@ -58,11 +57,6 @@ class WebScraper:
         paras = paras.find_all("p")
         for p in paras:
             articles.append(p.text.strip())
-
-        print(title, summary, time_posted, sep="\n\n", end="\n\n")
-
-        for article in articles:
-            print(article, "\n")
         
 
         return ScraperResult(
