@@ -159,14 +159,16 @@ class VerificationRAGPipeline:
         """
         Execute the RAG flow for a verification request.
         """
-        if not request or not request.content:
+        if not request or not request.post_content:
             return {
                 "status": RagResponse.UNVERIFIED.value,
                 "reason": "No content provided for verification",
             }
 
-        claim = request.title or request.source or "The content to verify"
-        self._build_corpus(contents=request.content, summary=request.article_summary)
+        # Use the post content itself as the claim; build corpus from provided context + post content
+        claim = request.post_content
+        corpus_inputs = list(request.context or []) + [request.post_content]
+        self._build_corpus(contents=corpus_inputs, summary=None)
         retrieved = self._retrieve(query=claim, k=top_k)
         answer = self._generate_answer(query=claim, context=retrieved)
         label, confidence, rationale = self._classify(claim, answer, retrieved)
@@ -178,9 +180,7 @@ class VerificationRAGPipeline:
             "supporting_context": retrieved,
             "rationale": rationale,
             "metadata": {
-                "source": request.source,
-                "title": request.title,
-                "date_published": request.date_published.isoformat() if request.date_published else None,
+                "post_id": request.post_id,
             },
         }
 
