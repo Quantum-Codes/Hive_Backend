@@ -18,8 +18,6 @@ class RagRequest(BaseModel):
     """
     The request to the RAG pipeline.
     """
-    source: str = Field(..., description="The source of the content to be verified")
-    title: str = Field(..., description="The title of the content to be verified")
-    content: List[str] = Field(..., description="The content to be verified")
-    article_summary: Optional[str] = Field(..., description="The summary of the content to be verified")
-    date_published: Optional[datetime] = Field(..., description="The date the content was published")
+    post_id: str = Field(..., description="The ID of the post to be verified")
+    post_content: str = Field(..., description="The content of the post to be verified")
+    context: List[str] = Field(..., description="The context to be used for verification")
