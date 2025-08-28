@@ -13,7 +13,7 @@
 import bs4, sys, os
 import requests, datetime
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../'))
 from models.scraper import ScraperResult
 
 class WebScraper:
@@ -77,7 +77,29 @@ class WebScraper:
 
         soup = bs4.BeautifulSoup(response.content, "html5lib")
         # div#__next -> div.containerNew -> div.midSec -> div.storyPage_storyBox__9iWpG
-        content_body = soup.body.find("div", id="__next").find("div", class_="containerNew").find("div", class_="midSec").find("div", class_="storyPage_storyBox__9iWpG")
+        content_body = soup.body.find("div", id="__next").find("div", class_="clearfix")
+        content_body = content_body.find("div", class_="midSec")
+        content_body = content_body.find("div", class_="storyPage_storyBox__9iWpG")
 
+        title = content_body.find("h1", id="article-0").text.strip().strip("\"")
+        summary = content_body.find("h2", class_="storyPage_summary__K7jOt").text.strip().strip("\"")
+
+        time_posted = content_body.find("div", class_ = "storyPage_authorSocial__z7nHm").find("div", class_ = "storyPage_authorInfo__Dj3b4").find("div", class_ = "storyPage_authorDesc__cKKWd").find("div", class_ = "storyPage_date__iM8Kb").find("span").text.strip().strip("\"")
+        # 27 Aug 2025, 12:09 AM IST - format
+        time_posted = datetime.datetime.strptime(time_posted, "%d %b %Y, %I:%M %p IST")
+
+        articles = []
+        paras = content_body.find("div", class_ = "storyPage_storyContent__3xuFc").find_all("div", class_ = "storyParagraph")
+
+        for item in paras:
+            articles.append(item.find("p").text.strip().strip("\""))
         
-        
+
+        return ScraperResult(
+            source=url,
+            title=title,
+            article_summary=summary,
+            date_published=time_posted,
+            content=articles
+        )
+
