@@ -25,7 +25,7 @@ router = APIRouter(
 # signup (register new user)
 @router.post("/signup",response_model=schemas.ShowUser)
 def signup(user: schemas.SignUp):
-    existing_user =  supabase.table('#TODO enter the table name and do the things ').select('*').eq('email',user.email).execute()
+    existing_user =  supabase.table('users').select('*').eq('email',user.email).execute()
     if existing_user.data:
             raise HTTPException(status_code=400, detail="Email already registered")   
     hashed_pw = hash_password(user.password)
@@ -90,3 +90,4 @@ def refresh_token(token: str = Depends(oauth2_scheme)):
     new_token = Oauth_token.create_access_token(data={"sub": payload.get("sub")}, expires_delta=timedelta(minutes=30))
     return {"access_token": new_token, "token_type": "bearer"}
 
+ 
