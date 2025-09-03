@@ -27,11 +27,11 @@ def get_context(post_data: PostContentRequest):
     return context
 
 
-def verify_post(post_data: PostVerificationRequest):
+def verify_post(post_data: PostContentRequest):
     """Verify a post using the RAG pipeline.
 
     Args:
-        post_data (PostVerificationRequest): The post data to verify.
+        post_data (PostContentRequest): The post data to verify.
 
     Returns:
         _type_: _description_
