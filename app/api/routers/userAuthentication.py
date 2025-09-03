@@ -1,8 +1,8 @@
-from fastapi import APIRouter,Depends,HTTPException
+from fastapi import APIRouter,Depends,HTTPException,Request
 from typing import List,Optional
 from app.models import schemas,databases
 from fastapi.security import OAuth2PasswordBearer
-from app.core import security,Oauth_token
+from app.core import security
 from datetime import datetime,timedelta
 
 verify_password = security.veriyPassword
@@ -70,9 +70,8 @@ def login(user: schemas.Login):
 
 # get currently logged in user (from JWT token)
 @router.get("/users/me")
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    payload = Oauth_token.decode_access_token(token)
-    email: str = payload.get("sub")
+def get_current_user(request : Request):
+    email = request.cookies.get('email')
     result = supabase.table("users").select("*").eq("email", email).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -83,7 +82,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 # logout (invalidate session)
 @router.post("/logout")
-def logout(token: str = Depends(oauth2_scheme)):
+def logout():
     return {"msg": "Logout successful (JWT will expire automatically)"}
 
 
@@ -91,9 +90,9 @@ def logout(token: str = Depends(oauth2_scheme)):
 
 # refresh
 @router.post("/refresh")
-def refresh_token(token: str = Depends(oauth2_scheme)):
-    payload = Oauth_token.decode_access_token(token)
-    new_token = Oauth_token.create_access_token(data={"sub": payload.get("sub")}, expires_delta=timedelta(minutes=30))
-    return {"access_token": new_token, "token_type": "bearer"}
+def refresh_token():
+    #payload = Oauth_token.decode_access_token(token)
+    #new_token = Oauth_token.create_access_token(data={"sub": payload.get("sub")}, expires_delta=timedelta(minutes=30))
+    return {"access_token": "Token refreshed", "token_type": "bearer"}
 
  
