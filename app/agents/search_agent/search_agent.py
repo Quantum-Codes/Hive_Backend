@@ -1,6 +1,8 @@
 import requests
 import os
 
+from app.models.schemas import PostContentRequest
+
 def search_web(post_content: str):
     api_key = os.getenv("GOOGLE_CUSTOM_SEARCH_API")
     search_engine_id = os.getenv("SEARCH_ENGINE_ID")
@@ -29,3 +31,8 @@ def search_web(post_content: str):
         for item in search_results
     ]
     """
+    
+    
+def get_links(post_data: PostContentRequest):
+    links = search_web(post_data.content)
+    return [link["link"] for link in links]
