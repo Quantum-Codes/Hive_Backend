@@ -2,7 +2,7 @@
 # This file will contain business logic for post verification
 # Examples: verify post content, classify posts, handle verification results
 #
-# ASSIGNED TO: Team collaboration (Dhruv Pokhriyal + Ankit Sinha)
+# ASSIGNED TO: Team collaboration (Dhruv Pokhriyal + Ankit Sinha + Karthik)
 # TASK: Implement business logic for post verification
 # - Coordinate between scraping and RAG pipeline
 # - Handle verification results and classification
