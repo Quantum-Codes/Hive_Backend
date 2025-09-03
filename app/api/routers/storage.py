@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
-from models import databases
+from app.models import databases
 import uuid
 
 supabase = databases.supabase

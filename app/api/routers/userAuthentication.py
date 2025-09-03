@@ -1,11 +1,9 @@
 from fastapi import APIRouter,Depends,HTTPException
 from typing import List,Optional
-from models import schemas
+from app.models import schemas,databases
 from fastapi.security import OAuth2PasswordBearer
-from models import schemas
-from core import security,Oauth_token
-from models import databases
-from datetime import timedelta
+from app.core import security,Oauth_token
+from datetime import datetime,timedelta
 
 verify_password = security.veriyPassword
 supabase = databases.supabase
@@ -26,13 +24,21 @@ router = APIRouter(
 @router.post("/signup",response_model=schemas.ShowUser)
 def signup(user: schemas.SignUp):
     existing_user =  supabase.table('users').select('*').eq('email',user.email).execute()
-    if existing_user.data:
+    existing_userName = supabase.table('users').select('*').eq('username',user.displayName).execute()
+    if existing_user.data :
             raise HTTPException(status_code=400, detail="Email already registered")   
+    if existing_userName.data : 
+            raise HTTPException(status_code=400, detail="Username already exists ")   
+
     hashed_pw = hash_password(user.password)
     response = supabase.table("users").insert({
-        "name": user.name,
+        "full_name": user.name,
         "email": user.email,
-        "password": hashed_pw
+        "hashed_password": hashed_pw,
+        'username' : user.displayName,
+        'bio' : user.bio,
+        'created_at' : datetime.now().isoformat(),
+        'profile_pic_url' : user.avatar
     }).execute()
     
     if not response.data:
@@ -49,7 +55,7 @@ def login(user: schemas.Login):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     db_user = result.data[0]
-    if not verify_password(user.password, db_user["password"]):
+    if not verify_password(user.password, db_user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = Oauth_token.create_access_token(

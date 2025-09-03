@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from models import schemas, databases
+from app.models import schemas,databases
+
 from . import userAuthentication
 import datetime
 from typing import List
@@ -8,6 +9,7 @@ router = APIRouter(
     prefix='/post',
     tags=["Posts"]
 )
+
 
 supabase = databases.supabase
 

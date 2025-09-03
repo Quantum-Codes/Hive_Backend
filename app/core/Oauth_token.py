@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
-from models import schemas
+from app.models import schemas
 from fastapi import HTTPException,status
 
 # CONFIG
