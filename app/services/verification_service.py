@@ -11,15 +11,21 @@
 # - Verification result storage and retrieval
 
 from app.agents.scrapers.scraper_agent.web_scraper import WebScraper
+from app.agents.search_agent.search_agent import get_links, search_web
 from app.models.rag import RagRequest
 from app.models.schemas import PostContentRequest, PostVerificationRequest
 from agents.rag_agent.rag_agent import VerificationRAGPipeline
+    
 
 pipeline = VerificationRAGPipeline()
 web_scrapper = WebScraper()
 
-# def search_context(post_data: PostContentRequest):
-#     links = 
+
+def get_context(post_data: PostContentRequest):
+    links = get_links(post_data)
+    context = [web_scrapper.webscrape(link) for link in links]
+    return context
+
 
 def verify_post(post_data: PostVerificationRequest):
     """Verify a post using the RAG pipeline.
@@ -30,10 +36,11 @@ def verify_post(post_data: PostVerificationRequest):
     Returns:
         _type_: _description_
     """
+    context = get_context(post_data)
     request = RagRequest(
-        user_id=post_data.user_id,
-        post_id=post_data.post_id,
-        content=post_data.content
+        post_id=post_data.pid,
+        post_content=post_data.content,
+        context=context
     )
     response = pipeline.verify(request, top_k=4)
     return response
