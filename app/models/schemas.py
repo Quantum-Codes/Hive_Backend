@@ -48,6 +48,16 @@ class Post(BaseModel):
     class Config:
         orm_mode = True
 
+class PostContentRequest(BaseModel):
+    pid: str
+    content: str
+
+class PostVerificationRequest(BaseModel):
+    pid: str
+    content: str
+    context: List[str]
+
+
 
 class Comment(BaseModel):
     cid: str
