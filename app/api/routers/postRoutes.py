@@ -13,6 +13,7 @@ router = APIRouter(
 
 supabase = databases.supabase
 
+
 #  Upload media + create a post
 @router.post('/', response_model=schemas.ShowPost)
 def create_post(
