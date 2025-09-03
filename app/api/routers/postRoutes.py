@@ -1,14 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from app.models import schemas,databases
-
 from . import userAuthentication
 import datetime
 from typing import List
+from redis import Redis
+from rq import Queue
+from ...services.verification_service import verify_post
+
 
 router = APIRouter(
     prefix='/post',
     tags=["Posts"]
 )
+
+
+redis_conn = Redis(host='localhost', port=6379)
+task_queue = Queue(connection=redis_conn)
 
 
 supabase = databases.supabase
@@ -33,7 +40,7 @@ def create_post(
     res = supabase.table('posts').insert(new_post).execute()
     if not res.data:
         raise HTTPException(status_code=400, detail='Error creating the post')
-
+    task_queue.enqueue(verify_post, schemas.PostContentRequest(pid=post.pid, content=post.content))
     return {
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
