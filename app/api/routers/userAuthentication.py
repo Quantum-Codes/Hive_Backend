@@ -1,10 +1,16 @@
 import app
 from fastapi import Request, APIRouter,Depends,HTTPException, RedirectResponse
+import app
+from fastapi import Request, APIRouter,Depends,HTTPException, RedirectResponse
 from typing import List,Optional
+from app.core.config import APISettings
+from app.utils.supabase_client import get_supabase_client
 from app.core.config import APISettings
 from app.utils.supabase_client import get_supabase_client
 from datetime import datetime,timedelta
 
+supabase = get_supabase_client()
+REDIRECT_URL = APISettings.callback_url
 supabase = get_supabase_client()
 REDIRECT_URL = APISettings.callback_url
 
@@ -20,18 +26,7 @@ router = APIRouter(
 
 @router.get("/login")
 async def login_with_google():
-    """
-    Endpoint to initiate the Google OAuth sign-in flow.
-    It generates an OAuth URL and redirects the user's browser to it.
-    
-    This single endpoint handles both new user sign-ups and returning user
-    sign-ins. If a user's Google account is new to your Supabase project,
-    a new user will be created.
-    """
     try:
-        # The sign_in_with_oauth method returns a response object
-        # that includes the URL to redirect the user to.
-        # The flow_type="pkce" is recommended for server-side OAuth.
         oauth_response = supabase.auth.sign_in_with_oauth(
             {"provider": "google", "options": {"redirect_to": REDIRECT_URL}}
         )
@@ -43,18 +38,14 @@ async def login_with_google():
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
     """
-    This endpoint handles the redirect from Google.
-    It receives the authorization code and exchanges it for a user session.
+    this receives the authorization code and exchanges it for a user session.
     """
     try:
-        # Extract the 'code' query parameter from the redirect URL
         code = request.query_params.get("code")
 
         if not code:
             raise HTTPException(status_code=400, detail="Authorization code not found in request.")
 
-        # Exchange the authorization code for a user session
-        # Supabase handles the PKCE flow under the hood with this method
         session_response = supabase.auth.exchange_code_for_session(
             {"auth_code": code, "code_verifier": None}
         )
@@ -92,3 +83,4 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 @router.post("/logout")
 def logout(token: str = Depends(oauth2_scheme)):
     return {"msg": "Logout successful (JWT will expire automatically)"}
+
