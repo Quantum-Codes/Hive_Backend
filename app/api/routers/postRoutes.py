@@ -20,6 +20,7 @@ task_queue = Queue(connection=redis_conn)
 
 supabase = get_supabase_client()
 
+
 #  Upload media + create a post
 @router.post('/', response_model=schemas.ShowPost)
 def create_post(

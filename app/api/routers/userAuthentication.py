@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import app
 from fastapi import Request, APIRouter,Depends,HTTPException, RedirectResponse
 import app
@@ -7,6 +8,13 @@ from app.core.config import APISettings
 from app.utils.supabase_client import get_supabase_client
 from app.core.config import APISettings
 from app.utils.supabase_client import get_supabase_client
+=======
+from fastapi import APIRouter,Depends,HTTPException,Request
+from typing import List,Optional
+from app.models import schemas,databases
+from fastapi.security import OAuth2PasswordBearer
+from app.core import security
+>>>>>>> 811137cb9e2efe8703e8c2b7652fcac5194fd146
 from datetime import datetime,timedelta
 
 supabase = get_supabase_client()
@@ -68,9 +76,8 @@ async def auth_callback(request: Request):
 
 # get currently logged in user (from JWT token)
 @router.get("/users/me")
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    payload = Oauth_token.decode_access_token(token)
-    email: str = payload.get("sub")
+def get_current_user(request : Request):
+    email = request.cookies.get('email')
     result = supabase.table("users").select("*").eq("email", email).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="User not found")
@@ -81,6 +88,20 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 # logout (invalidate session)
 @router.post("/logout")
-def logout(token: str = Depends(oauth2_scheme)):
+def logout():
     return {"msg": "Logout successful (JWT will expire automatically)"}
 
+<<<<<<< HEAD
+=======
+
+# refresh access token (optional, if using refresh tokens)
+
+# refresh
+@router.post("/refresh")
+def refresh_token():
+    #payload = Oauth_token.decode_access_token(token)
+    #new_token = Oauth_token.create_access_token(data={"sub": payload.get("sub")}, expires_delta=timedelta(minutes=30))
+    return {"access_token": "Token refreshed", "token_type": "bearer"}
+
+ 
+>>>>>>> 811137cb9e2efe8703e8c2b7652fcac5194fd146
