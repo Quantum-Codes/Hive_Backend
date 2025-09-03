@@ -1,8 +1,8 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
-from app.models import databases
+from app.utils.supabase_client import get_supabase_client
 import uuid
 
-supabase = databases.supabase
+supabase = get_supabase_client()
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
 # Upload profile picture

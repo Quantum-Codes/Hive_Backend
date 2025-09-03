@@ -1,14 +1,18 @@
-from fastapi import APIRouter,Depends,HTTPException
+import app
+from fastapi import Request, APIRouter,Depends,HTTPException, RedirectResponse
+import app
+from fastapi import Request, APIRouter,Depends,HTTPException, RedirectResponse
 from typing import List,Optional
-from app.models import schemas,databases
-from fastapi.security import OAuth2PasswordBearer
-from app.core import security,Oauth_token
+from app.core.config import APISettings
+from app.utils.supabase_client import get_supabase_client
+from app.core.config import APISettings
+from app.utils.supabase_client import get_supabase_client
 from datetime import datetime,timedelta
 
-verify_password = security.veriyPassword
-supabase = databases.supabase
-hash_password = security.hashPassword
-
+supabase = get_supabase_client()
+REDIRECT_URL = APISettings.callback_url
+supabase = get_supabase_client()
+REDIRECT_URL = APISettings.callback_url
 
 # this tells FastAPI to look for "Authorization: Bearer <token>"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -20,50 +24,44 @@ router = APIRouter(
     tags=['Users']
 )
 
-# signup (register new user)
-@router.post("/signup",response_model=schemas.ShowUser)
-def signup(user: schemas.SignUp):
-    existing_user =  supabase.table('users').select('*').eq('email',user.email).execute()
-    existing_userName = supabase.table('users').select('*').eq('username',user.displayName).execute()
-    if existing_user.data :
-            raise HTTPException(status_code=400, detail="Email already registered")   
-    if existing_userName.data : 
-            raise HTTPException(status_code=400, detail="Username already exists ")   
-
-    hashed_pw = hash_password(user.password)
-    response = supabase.table("users").insert({
-        "full_name": user.name,
-        "email": user.email,
-        "hashed_password": hashed_pw,
-        'username' : user.displayName,
-        'bio' : user.bio,
-        'created_at' : datetime.now().isoformat(),
-        'profile_pic_url' : user.avatar
-    }).execute()
-    
-    if not response.data:
-        raise HTTPException(status_code=500, detail="Error creating user")
-    
-    return response.data[0]
+@router.get("/login")
+async def login_with_google():
+    try:
+        oauth_response = supabase.auth.sign_in_with_oauth(
+            {"provider": "google", "options": {"redirect_to": REDIRECT_URL}}
+        )
+        return RedirectResponse(url=oauth_response.url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-# login (sign in with email + password)
-@router.post("/login")
-def login(user: schemas.Login):
-    result = supabase.table("users").select("*").eq("email", user.email).execute()
-    if not result.data:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    db_user = result.data[0]
-    if not verify_password(user.password, db_user["hashed_password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    token = Oauth_token.create_access_token(
-        data={"sub": db_user["email"]},
-        expires_delta=timedelta(minutes=30)
-    )
-    return {"access_token": token, "token_type": "bearer"}
+@router.get("/auth/callback")
+async def auth_callback(request: Request):
+    """
+    this receives the authorization code and exchanges it for a user session.
+    """
+    try:
+        code = request.query_params.get("code")
 
+        if not code:
+            raise HTTPException(status_code=400, detail="Authorization code not found in request.")
+
+        session_response = supabase.auth.exchange_code_for_session(
+            {"auth_code": code, "code_verifier": None}
+        )
+
+        if session_response.error:
+            raise HTTPException(
+                status_code=session_response.error.status,
+                detail=session_response.error.message,
+            )
+        
+        user_data = session_response.user.model_dump()
+        
+        return {"message": "User successfully authenticated!", "user_data": user_data}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
@@ -86,14 +84,3 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 def logout(token: str = Depends(oauth2_scheme)):
     return {"msg": "Logout successful (JWT will expire automatically)"}
 
-
-# refresh access token (optional, if using refresh tokens)
-
-# refresh
-@router.post("/refresh")
-def refresh_token(token: str = Depends(oauth2_scheme)):
-    payload = Oauth_token.decode_access_token(token)
-    new_token = Oauth_token.create_access_token(data={"sub": payload.get("sub")}, expires_delta=timedelta(minutes=30))
-    return {"access_token": new_token, "token_type": "bearer"}
-
- 
