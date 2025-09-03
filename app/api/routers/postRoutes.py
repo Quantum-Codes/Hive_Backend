@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from app.models import schemas,databases
-
+from app.models import schemas
+from app.utils.supabase_client import get_supabase_client
 from . import userAuthentication
 import datetime
 from typing import List
@@ -10,8 +10,7 @@ router = APIRouter(
     tags=["Posts"]
 )
 
-
-supabase = databases.supabase
+supabase = get_supabase_client()
 
 #  Upload media + create a post
 @router.post('/', response_model=schemas.ShowPost)
