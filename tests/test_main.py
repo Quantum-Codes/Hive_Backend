@@ -11,9 +11,9 @@
 # - Authentication and authorization tests
 
 from fastapi import FastAPI
-from app.api.routers import postRoutes,storage,userAuthentication
+from app.api.routers import post_routes,storage,user_auth
 app = FastAPI()
 
-app.include_router(postRoutes.router)
+app.include_router(post_routes.router)
 app.include_router(storage.router)
-app.include_router(userAuthentication.router)
+app.include_router(user_auth.router)
