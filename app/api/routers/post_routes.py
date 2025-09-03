@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from app.models import schemas
 from app.utils.supabase_client import get_supabase_client
-from . import userAuthentication
+from . import user_auth
 import datetime
 from typing import List
 from redis import Redis
@@ -25,7 +25,7 @@ supabase = get_supabase_client()
 @router.post('/', response_model=schemas.ShowPost)
 def create_post(
     post: schemas.Post,
-    user = Depends(userAuthentication.get_current_user)
+    user = Depends(user_auth.get_current_user)
 ):
     new_post = {
         'pid': post.pid,
@@ -67,7 +67,7 @@ def get_all_posts():
 
 #  Get current user's posts
 @router.get('/me', response_model=List[schemas.ShowPost])
-def my_posts(user = Depends(userAuthentication.get_current_user)):
+def my_posts(user = Depends(user_auth.get_current_user)):
     res = supabase.table('posts').select('*').eq('owner_id', user['uid']).execute()
     return res.data
 
@@ -83,7 +83,7 @@ def get_single_post(pid: str):
 
 #  Delete post
 @router.delete('/{pid}')
-def delete_post(pid: str, user = Depends(userAuthentication.get_current_user)):
+def delete_post(pid: str, user = Depends(user_auth.get_current_user)):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
 
     if not res.data or res.data['owner_id'] != user['uid']:
@@ -96,7 +96,7 @@ def delete_post(pid: str, user = Depends(userAuthentication.get_current_user)):
 def update_post(
     pid: str,
     post: schemas.Post,
-    user = Depends(userAuthentication.get_current_user)
+    user = Depends(user_auth.get_current_user)
 ):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
     if not res.data or res.data['owner_id'] != user['uid']:
