@@ -30,12 +30,18 @@ hive-backend/
 │   │   ├── __init__.py
 │   │   ├── post_service.py        # TODO: Post operations
 │   │   └── verification_service.py # TODO: Verification logic
+│   ├── agents/            # Agents responsible for key workflows
+│   │   ├── __init__.py
+│   │   ├── search_agent/          # Search agent package
+│   │   │   └── __init__.py
+│   │   ├── scrapper_agent/        # Scrapper agent package
+│   │   │   └── __init__.py
+│   │   └── rag_agent/             # RAG agent package
+│   │       ├── __init__.py
+│   │       └── verification_pipeline.py # LangChain RAG pipeline implementation
 │   ├── scrapers/          # Web scraping module
 │   │   ├── __init__.py
 │   │   └── web_scraper.py # TODO: Web scraping implementation
-│   ├── rag_pipeline/      # LangChain RAG pipeline
-│   │   ├── __init__.py
-│   │   └── verification_pipeline.py # TODO: RAG pipeline implementation
 │   └── utils/             # Helper utilities
 │       ├── __init__.py
 │       └── helpers.py     # TODO: Utility functions
@@ -127,7 +133,7 @@ The content verification system follows this high-level flow:
 
 **🧑‍💻 Dhruv Pokhriyal**
 
--   **Primary**: RAG Pipeline (`app/rag_pipeline/verification_pipeline.py`)
+-   **Primary**: RAG Pipeline (`app/agents/rag_agent/verification_pipeline.py`)
 -   **Secondary**: Authentication system and API endpoints (helping Karthik)
 -   **Collaboration**: Verification service and utilities
 
@@ -171,7 +177,7 @@ The content verification system follows this high-level flow:
     - Handle different content types and sources
     - Error handling and rate limiting
 
-5. **RAG Pipeline** (`app/rag_pipeline/verification_pipeline.py`) - **ASSIGNED TO: Dhruv Pokhriyal**
+5. **RAG Pipeline** (`app/agents/rag_agent/verification_pipeline.py`) - **ASSIGNED TO: Dhruv Pokhriyal**
 
     - LangChain document retrieval
     - Question-answering system
@@ -248,6 +254,7 @@ pytest --cov=app
     - Copy the Project URL and API keys
 
 4. **Get your OpenAI API key:**
+
     - Go to [OpenAI Platform](https://platform.openai.com/api-keys)
     - Create a new API key
     - Copy the key to your `.env` file
