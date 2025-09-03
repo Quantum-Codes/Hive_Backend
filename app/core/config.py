@@ -13,7 +13,8 @@ TASK: Configuration system implementation with Supabase integration
 
 import os
 from typing import Optional, List
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import validator
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -40,16 +41,27 @@ class SecuritySettings(BaseSettings):
     class Config:
         env_prefix = "SECURITY_"
 
-class OpenAISettings(BaseSettings):
-    """OpenAI API configuration for RAG pipeline."""
+class GeminiSettings(BaseSettings):
+    """Google Gemini API configuration for RAG pipeline."""
     
-    api_key: str = os.getenv("OPENAI_API_KEY", "")
-    model: str = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
-    max_tokens: int = int(os.getenv("OPENAI_MAX_TOKENS", "1000"))
-    temperature: float = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
+    api_key: str = os.getenv("GEMINI_API_KEY", "")
+    model: str = os.getenv("GEMINI_MODEL", "gemini-pro")
+    embed_model: str = os.getenv("GEMINI_EMBED_MODEL", "models/embedding-001")
+    max_output_tokens: int = int(os.getenv("GEMINI_MAX_TOKENS", "1000"))
+    temperature: float = float(os.getenv("GEMINI_TEMPERATURE", "0.7"))
     
     class Config:
-        env_prefix = "OPENAI_"
+        env_prefix = "GEMINI_"
+
+
+class VectorDBSettings(BaseSettings):
+    """Vector database configuration (Chroma)."""
+    
+    chroma_persist_path: str = os.getenv("CHROMA_PERSIST_PATH", ".chroma")
+    collection_name: str = os.getenv("CHROMA_COLLECTION", "verification_docs")
+    
+    class Config:
+        env_prefix = "CHROMA_"
 
 class ScrapingSettings(BaseSettings):
     """Web scraping configuration settings."""
@@ -139,7 +151,8 @@ class Settings(BaseSettings):
     # Sub-settings
     supabase: SupabaseSettings = SupabaseSettings()
     security: SecuritySettings = SecuritySettings()
-    openai: OpenAISettings = OpenAISettings()
+    gemini: GeminiSettings = GeminiSettings()
+    vectordb: VectorDBSettings = VectorDBSettings()
     scraping: ScrapingSettings = ScrapingSettings()
     api: APISettings = APISettings()
     logging: LoggingSettings = LoggingSettings()
@@ -163,10 +176,13 @@ class Settings(BaseSettings):
             return False
         return v
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    # Pydantic v2 configuration: read from .env and ignore unrelated env keys
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 # Create global settings instance
 settings = Settings()

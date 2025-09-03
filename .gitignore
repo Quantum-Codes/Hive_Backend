@@ -119,3 +119,6 @@ dmypy.json
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Chroma
+.chroma/
