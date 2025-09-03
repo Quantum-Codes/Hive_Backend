@@ -27,6 +27,8 @@ class WebScraper:
             return self._indiatoday_webscrape(url)
         elif url.startswith("https://www.livemint.com/"):
             return self._livemint_webscrape(url)
+        elif url.startswith("https://www.ndtv.com/"):
+            return self._ndtv_webscrape(url)
         else:
             raise ValueError("Site not allowed")
 
@@ -103,3 +105,21 @@ class WebScraper:
             content=articles
         )
 
+
+    def _ndtv_webscrape(self, url):
+
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise ValueError("Failed to retrieve content")
+
+        soup = bs4.BeautifulSoup(response.content, "html5lib")
+        # div.vjl-cnt -> div.vjl-cntr -> div.vjl-row -> div.vjl-Mid-1 -> div.vjl-row -> div.vjl-Mid-2 -> div.stp-wr -> div.sp-hd -> div.sp-cn -> 
+        content_body = soup.body.find("div", class_="vjl-cnt").find("div", class_="vjl-cntr").find("div", class_="vjl-row").find("div", class_="vjl-Mid-1")
+
+        title = content_body.find("h1", class_="sp-ttl").text.strip().strip("\"").strip()
+        summary = content_body.find("h2", class_="sp-descp").text.strip().strip("\"").strip()
+
+
+if __name__ == '__main__':
+    scraper = WebScraper()
+    scraper.webscrape("https://www.ndtv.com/offbeat/flipkart-big-billion-days-2025-amazon-great-indian-festival-sale-2025-dates-9202710")
