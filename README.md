@@ -57,7 +57,7 @@ hive-backend/
 
 ### Prerequisites
 
--   Python 3.8 or higher
+-   Python 3.13 or higher
 -   pip (Python package installer)
 
 ### Environment Setup
@@ -72,22 +72,19 @@ hive-backend/
 2. **Create virtual environment**
 
     ```bash
-    python3 -m venv venv
+    pip install poetry
+    poetry python install 3.13
     ```
 
 3. **Activate virtual environment**
 
     ```bash
-    # On macOS/Linux:
-    source venv/bin/activate
-
-    # On Windows:
-    venv\Scripts\activate
+    poetry env use python3.13
     ```
 
 4. **Install dependencies**
     ```bash
-    pip install -r requirements.txt
+    poetry install
     ```
 
 ## ▶️ Running the Server
@@ -96,7 +93,7 @@ hive-backend/
 
 ```bash
 # Make sure virtual environment is activated
-uvicorn app.main:app --reload
+poetry run uvicorn app.main:app --reload
 ```
 
 The server will start at `http://localhost:8000`

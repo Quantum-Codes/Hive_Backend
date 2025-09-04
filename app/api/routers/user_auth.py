@@ -1,12 +1,14 @@
 import app
-from fastapi import Request, HTTPAuthorizationCredentials, APIRouter,Depends,HTTPException, RedirectResponse, HTTPBearer
+from fastapi import Request, APIRouter,Depends,HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.responses import RedirectResponse
 from typing import List,Optional
 from app.core.config import APISettings
 from app.utils.supabase_client import get_supabase_client
 from datetime import datetime,timedelta
 
 supabase = get_supabase_client()
-REDIRECT_URL = APISettings.callback_url
+REDIRECT_URL = APISettings().callback_url
 
 # this tells FastAPI to look for "Authorization: Bearer <token>"
 bearer_scheme = HTTPBearer()
@@ -58,28 +60,24 @@ async def auth_callback(request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/users/me")
-def get_current_logged_in_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
-
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     try:
         token = credentials.credentials
         user_from_jwt = supabase.auth.get_user_from_jwt(token)
-        
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Not logged in")
-            
         user_id = user_from_jwt.id
         profile_response = supabase.table("users").select("*").eq("id", user_id).execute()
-        
         if not profile_response.data:
-            # If a user exists in auth.users but has no entry in the users table.
             raise HTTPException(status_code=404, detail="User profile not found")
-            
-        return {"message": "User is authenticated.", "user": profile_response.data[0]}
-        
+        return profile_response.data[0]
     except Exception as e:
-        # Catch any errors during the process and return a 401 Unauthorized response.
         raise HTTPException(status_code=401, detail=f"Invalid token or user not found: {str(e)}")
+
+
+@router.get("/users/me")
+def get_current_logged_in_user(user=Depends(get_current_user)):
+    return {"message": "User is authenticated.", "user": user}
 
 
 @router.get("/logout")
@@ -88,4 +86,4 @@ def logout_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_schem
         supabase.auth.sign_out() # uses Authorization header
         return {"message": "User successfully logged out."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
