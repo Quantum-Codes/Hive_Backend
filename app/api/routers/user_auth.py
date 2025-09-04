@@ -1,21 +1,8 @@
-<<<<<<< HEAD
 import app
 from fastapi import Request, HTTPAuthorizationCredentials, APIRouter,Depends,HTTPException, RedirectResponse, HTTPBearer
 from typing import List,Optional
 from app.core.config import APISettings
 from app.utils.supabase_client import get_supabase_client
-<<<<<<< HEAD:app/api/routers/userAuthentication.py
-from app.core.config import APISettings
-from app.utils.supabase_client import get_supabase_client
-=======
-from fastapi import APIRouter,Depends,HTTPException,Request
-from typing import List,Optional
-from app.models import schemas,databases
-from fastapi.security import OAuth2PasswordBearer
-from app.core import security
->>>>>>> 811137cb9e2efe8703e8c2b7652fcac5194fd146
-=======
->>>>>>> f292d0c3df85fd1be1e3f39d0a6e845edfbb0150:app/api/routers/user_auth.py
 from datetime import datetime,timedelta
 
 supabase = get_supabase_client()
@@ -72,37 +59,6 @@ async def auth_callback(request: Request):
 
 
 @router.get("/users/me")
-<<<<<<< HEAD:app/api/routers/userAuthentication.py
-def get_current_user(request : Request):
-    email = request.cookies.get('email')
-    result = supabase.table("users").select("*").eq("email", email).execute()
-    if not result.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    return result.data[0]
-
-
-
-
-# logout (invalidate session)
-@router.post("/logout")
-def logout():
-    return {"msg": "Logout successful (JWT will expire automatically)"}
-
-<<<<<<< HEAD
-=======
-
-# refresh access token (optional, if using refresh tokens)
-
-# refresh
-@router.post("/refresh")
-def refresh_token():
-    #payload = Oauth_token.decode_access_token(token)
-    #new_token = Oauth_token.create_access_token(data={"sub": payload.get("sub")}, expires_delta=timedelta(minutes=30))
-    return {"access_token": "Token refreshed", "token_type": "bearer"}
-
- 
->>>>>>> 811137cb9e2efe8703e8c2b7652fcac5194fd146
-=======
 def get_current_logged_in_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
 
     try:
@@ -132,5 +88,4 @@ def logout_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_schem
         supabase.auth.sign_out() # uses Authorization header
         return {"message": "User successfully logged out."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
->>>>>>> f292d0c3df85fd1be1e3f39d0a6e845edfbb0150:app/api/routers/user_auth.py
+        raise HTTPException(status_code=500, detail=str(e)) 
