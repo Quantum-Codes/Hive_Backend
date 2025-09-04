@@ -69,8 +69,8 @@ class WebScraper:
             article_summary=summary,
             date_published=time_posted,
             content=articles
-        )
 
+        )
     def _livemint_webscrape(self, url):
 
         response = requests.get(url)
@@ -108,8 +108,19 @@ class WebScraper:
 
     def _ndtv_webscrape(self, url):
 
-        response = requests.get(url)
+        headers = {
+            "Sec-CH-UA": '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+        }
+
+        response = requests.get(url, headers=headers)
         if response.status_code != 200:
+            # more descriptive
+            print(f"Failed to retrieve: {response.status_code}")
+            print(response.text)
             raise ValueError("Failed to retrieve content")
 
         soup = bs4.BeautifulSoup(response.content, "html5lib")
@@ -118,8 +129,20 @@ class WebScraper:
 
         title = content_body.find("h1", class_="sp-ttl").text.strip().strip("\"").strip()
         summary = content_body.find("h2", class_="sp-descp").text.strip().strip("\"").strip()
+        time_posted = content_body.find("nav", class_ = "pst-by").find("ul", class_ = "pst-by_ul").find_all("li")[2].find("span").text.strip().strip("\"").strip()
+        # format - Sep 02, 2025 16:11 pm IST
+        time_posted = datetime.datetime.strptime(time_posted, "%b %d, %Y %H:%M %p IST")
 
+        paras = content_body.find("div", class_ = "sp_txt").find("div", class_ = "Art-exp_cn").find("div", class_ = "Art-exp_wr").find_all("p")
 
-if __name__ == '__main__':
-    scraper = WebScraper()
-    scraper.webscrape("https://www.ndtv.com/offbeat/flipkart-big-billion-days-2025-amazon-great-indian-festival-sale-2025-dates-9202710")
+        articles = []
+        for item in paras:
+            articles.append(item.text.strip().strip("\""))
+        
+        return ScraperResult(
+            source=url,
+            title=title,
+            article_summary=summary,
+            date_published=time_posted,
+            content=articles
+        )
