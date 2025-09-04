@@ -175,6 +175,53 @@ class WebScraper:
             print(f"Failed to process {url} with newspaper3k: {e}")
             # Fallback to the previous generic scraper if newspaper fails
             return self._old_generic_webscrape(url)
+        
+
+    def _old_generic_webscrape(self, url):
+        """
+        A generic fallback scraper that extracts all meaningful text from a URL.
+        It tries to remove common non-content elements like ads, scripts, and navigation.
+        """
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+        }
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()  # Raise an exception for bad status codes
+        except requests.RequestException as e:
+            print(f"Failed to retrieve content from {url}: {e}")
+            raise ValueError(f"Failed to retrieve content from {url}")
+
+        soup = bs4.BeautifulSoup(response.content, "html5lib")
+
+        # Remove non-content tags
+        for tag in soup(["script", "style", "footer", "header", "iframe", "noscript"]):
+            tag.decompose()
+
+        # Remove elements that are likely ads
+        for ad_element in soup.find_all(
+            lambda tag: "ad" in tag.get("id", "").lower()
+            or "ad" in " ".join(tag.get("class", [])).lower()
+            or "google" in tag.get("id", "").lower()
+            or "google" in " ".join(tag.get("class", [])).lower()
+        ):
+            ad_element.decompose()
+
+        # Extract text from the body
+        body_text = soup.body.get_text(separator="\n", strip=True)
+        
+        # Split text into a list of non-empty lines
+        articles = [line for line in body_text.split("\n") if line]
+
+        title = soup.title.string.strip() if soup.title else "No title found"
+
+        return ScraperResult(
+            source=url,
+            title=title,
+            article_summary="Generic extraction, no summary available.",
+            date_published=datetime.datetime.now(),  # Use current time as a fallback
+            content=articles,
+        )
 
     
 if __name__ == "__main__":
