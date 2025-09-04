@@ -1,5 +1,12 @@
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
+from app.api.routers import post_routes, storage, user_auth
 from app.core.config import settings, is_development
+
+routes = [
+    post_routes.router,
+    storage.router,
+    user_auth.router
+]
 
 app = FastAPI(
     title=settings.app_name,
@@ -7,6 +14,10 @@ app = FastAPI(
     version=settings.app_version,
     debug=settings.debug
 )
+
+
+for route in routes:
+    app.include_router(route)
 
 @app.get("/")
 async def root():
