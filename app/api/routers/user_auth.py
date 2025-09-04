@@ -1,5 +1,7 @@
 import app
-from fastapi import Request, HTTPAuthorizationCredentials, APIRouter,Depends,HTTPException, RedirectResponse, HTTPBearer
+from fastapi import Request, APIRouter,Depends,HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.responses import RedirectResponse
 from typing import List,Optional
 from app.core.config import APISettings
 from app.utils.supabase_client import get_supabase_client

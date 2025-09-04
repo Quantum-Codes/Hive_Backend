@@ -93,7 +93,7 @@ hive-backend/
 
 ```bash
 # Make sure virtual environment is activated
-uvicorn app.main:app --reload
+poetry run uvicorn app.main:app --reload
 ```
 
 The server will start at `http://localhost:8000`
