@@ -15,10 +15,9 @@ app = FastAPI(
     debug=settings.debug
 )
 
-router = APIRouter()
 
 for route in routes:
-    router.include_router(route)
+    app.include_router(route)
 
 @app.get("/")
 async def root():
