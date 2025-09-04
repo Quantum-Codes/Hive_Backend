@@ -83,7 +83,7 @@ class APISettings(BaseSettings):
     
     class Config:
         env_prefix = "API_"
-
+    
 
 
 class LoggingSettings(BaseSettings):

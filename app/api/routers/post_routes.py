@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from app.models import schemas
 from app.utils.supabase_client import get_supabase_client
 from . import user_auth
-import datetime
+from datetime import datetime
 from typing import List
 from redis import Redis
 from rq import Queue
 from ...services.verification_service import verify_post
+from . import user_auth
 
 
 router = APIRouter(
@@ -108,3 +109,27 @@ def update_post(
     }).eq('pid', pid).execute()
 
     return updated.data[0]
+
+
+# 👍 Like a post
+@router.post("/{pid}/like")
+def like_post(pid: str, user=Depends(user_auth.get_current_user)):
+    res = supabase.table("posts").select("likes").eq("pid", pid).single().execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    new_likes = res.data["likes"] + 1
+    supabase.table("posts").update({"likes": new_likes}).eq("pid", pid).execute()
+    return {"pid": pid, "likes": new_likes}
+
+
+# 👎 Dislike a post
+@router.post("/{pid}/dislike")
+def dislike_post(pid: str, user=Depends(user_auth.get_current_user)):
+    res = supabase.table("posts").select("dislikes").eq("pid", pid).single().execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    new_dislikes = res.data["dislikes"] + 1
+    supabase.table("posts").update({"dislikes": new_dislikes}).eq("pid", pid).execute()
+    return {"pid": pid, "dislikes": new_dislikes}
