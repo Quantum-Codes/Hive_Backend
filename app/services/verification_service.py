@@ -13,6 +13,7 @@
 from app.agents.scrapers.scraper_agent.web_scraper import WebScraper
 from app.agents.search_agent.search_agent import get_links, search_web
 from app.models.rag import RagRequest
+from app.models.scraper import ScraperResult
 from app.models.schemas import PostContentRequest, PostVerificationRequest
 from agents.rag_agent.rag_agent import VerificationRAGPipeline
     
@@ -27,6 +28,20 @@ def get_context(post_data: PostContentRequest):
     return context
 
 
+def scraperresult_to_context_string(result: ScraperResult) -> str:
+    # Join title, summary, and content paragraphs into one string
+    parts = [
+        f"Title: {result.title}",
+        f"Summary: {result.article_summary}",
+        f"Published: {result.date_published}",
+        f"Source: {result.source}",
+        "Content:",
+        "\n".join(result.content)
+    ]
+    return "\n".join(parts)
+
+
+
 def verify_post(post_data: PostContentRequest):
     """Verify a post using the RAG pipeline.
 
@@ -37,11 +52,11 @@ def verify_post(post_data: PostContentRequest):
         _type_: _description_
     """
     context = get_context(post_data)
+    context_strings = [scraperresult_to_context_string(result) for result in context]
     request = RagRequest(
         post_id=post_data.pid,
         post_content=post_data.content,
-        context=context
+        context=context_strings
     )
     response = pipeline.verify(request, top_k=4)
     return response
-

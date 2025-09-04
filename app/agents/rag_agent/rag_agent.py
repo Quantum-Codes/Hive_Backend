@@ -208,7 +208,7 @@ class VerificationRAGPipeline:
             self._collection.delete(where_document={"$contains": claim})
         except Exception:
             pass
-        corpus_inputs = list(request.context or [])
+        corpus_inputs = request.context or []
         self._build_corpus(contents=corpus_inputs, summary=None)
         retrieved = self._retrieve(query=claim, k=top_k)
         answer = self._generate_answer(query=claim, context=retrieved)

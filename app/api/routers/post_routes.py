@@ -66,10 +66,10 @@ def get_all_posts():
     return res.data
 
 
-#  Get current user's posts
-@router.get('/me', response_model=List[schemas.ShowPost])
-def my_posts(user = Depends(user_auth.get_current_user)):
-    res = supabase.table('posts').select('*').eq('owner_id', user['uid']).execute()
+#  Get user's posts
+@router.get('/users/{uid}/posts', response_model=List[schemas.ShowPost])
+def user_posts(uid: str):
+    res = supabase.table('posts').select('*').eq('owner_id', uid).execute()
     return res.data
 
 
