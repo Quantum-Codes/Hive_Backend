@@ -6,7 +6,6 @@ from typing import List,Optional
 from app.core.config import APISettings
 from app.core.supabase import get_supabase_client
 from datetime import datetime,timedelta
-import jwt 
 from app.core.config import settings
 
 supabase = get_supabase_client()
@@ -55,16 +54,18 @@ async def login_with_google():
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
     """
-    this receives the authorization code and exchanges it for a user session.
+    OAuth callback endpoint that receives the authorization code and exchanges it for a user session.
     """
     try:
         code = request.query_params.get("code")
+        state = request.query_params.get("state")
 
         if not code:
             raise HTTPException(status_code=400, detail="Authorization code not found in request.")
 
+        # Exchange code for session
         session_response = supabase.auth.exchange_code_for_session(
-            {"auth_code": code, "code_verifier": None}
+            {"auth_code": code}
         )
 
         if session_response.error:
@@ -79,78 +80,106 @@ async def auth_callback(request: Request):
         email = user_data.get("email")
         created_at = user_data.get("created_at")
         
+        if not user_id or not email:
+            raise HTTPException(status_code=400, detail="Invalid user data received from OAuth provider")
+        
         full_name = user_data.get("user_metadata", {}).get("full_name", "")
-
         username = email.split("@")[0] if email else ""
 
-
-        supabase.table("users").upsert({
+        # Upsert user data with proper error handling
+        upsert_response = supabase.table("users").upsert({
             "uid": user_id,
             "email": email,
             "full_name": full_name,
             "username": username,
-            'created_at' : created_at,
-            'bio' : "Hey there ! I am using HIVE right now"
-            ## TODO profile_pic_url
-
+            'created_at': created_at,
+            'bio': "Hey there! I am using HIVE right now",
+            'profile_pic_url': ""  # Fixed field name consistency
         }).execute()
 
-        
-        return {"message": "User successfully authenticated!", "user_data": user_data}
+        if upsert_response.error:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to save user data: {upsert_response.error.message}"
+            )
 
+        return {
+            "message": "User successfully authenticated!", 
+            "user_data": user_data,
+            "access_token": session_response.session.access_token if session_response.session else None
+        }
+
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
 
 
 def decode_supabase_token(token: str):
+    """
+    Validate Supabase JWT token using Supabase's built-in verification.
+    This is more secure than manual JWT decoding.
+    """
     try:
-        decoded = jwt.decode(token, settings.supabase.anon_key, algorithms=["HS256"])
-        return decoded
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        # Use Supabase's built-in JWT verification instead of manual decoding
+        user_response = supabase.auth.get_user_from_jwt(token)
+        if not user_response:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_response
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Token validation failed: {str(e)}")
 
 
 @router.post("/defaults")
 async def login(authorization: Optional[str] = Header(None)):
+    """
+    Create user profile from JWT token if it doesn't exist.
+    This endpoint is called after successful OAuth authentication.
+    """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=400, detail="Authorization header missing or invalid")
 
     token = authorization.split(" ")[1]
-    decoded_token = decode_supabase_token(token)
     
-    uid = decoded_token.get("sub")
-    if not uid:
-        raise HTTPException(status_code=400, detail="UID not found in token")
+    try:
+        # Use standardized token validation
+        user_from_jwt = supabase.auth.get_user_from_jwt(token)
+        if not user_from_jwt:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        uid = user_from_jwt.id
+        if not uid:
+            raise HTTPException(status_code=400, detail="UID not found in token")
 
-    auth_response = supabase.auth.api.get_user(uid)
-    if not auth_response.user:
-        raise HTTPException(status_code=404, detail="UID not found in authentication table")
+        # Check if user already exists
+        user_response = supabase.table("users").select("*").eq("uid", uid).execute()
+        if user_response.data:
+            return {"message": "User already exists", "uid": uid}
 
-    user_response = supabase.table("users").select("*").eq("uid", uid).execute()
-    if user_response.data:
-        return {"message": "User already exists", "uid": uid}
+        # Extract user info from JWT
+        email = user_from_jwt.email
+        full_name = user_from_jwt.user_metadata.get("full_name", "") if user_from_jwt.user_metadata else ""
+        username = email.split("@")[0] if email else ""
 
-    # Extract info from token
-    email = decoded_token.get("email")
-    full_name = decoded_token.get("user_metadata", {}).get("full_name", "")
-    username = email.split("@")[0] if email else ""
+        # Insert into users table
+        insert_response = supabase.table("users").insert({
+            "uid": uid,
+            "email": email,
+            "full_name": full_name,
+            "username": username,
+            "bio": "Hey there! I am using HIVE right now",
+            "profile_pic_url": ""  # Fixed field name consistency
+        }).execute()
 
-    # Insert into users table
-    insert_response = supabase.table("users").insert({
-        "uid": uid,
-        "email": email,
-        "full_name": full_name,
-        "username": username,
-        "bio": "Hey there! I am using HIVE right now",
-        "profile_url": " "
-    }).execute()
+        if insert_response.error:
+            raise HTTPException(status_code=500, detail=insert_response.error.message)
 
-    if insert_response.error:
-        raise HTTPException(status_code=500, detail=insert_response.error.message)
-
-    return {"message": "User created successfully", "uid": uid}
+        return {"message": "User created successfully", "uid": uid}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     try:
