@@ -47,9 +47,8 @@ def create_post(
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
         "media_url": res.data[0]["media_url"],
-        "author_name": user["name"],
-        "author_display_name": user.get("displayName"),
-        "author_avatar": user.get("avatar"),
+        "owner_id": user["uid"],
+        "author_display_name": user.get("username"),
         "likes": 0,
         "dislikes": 0,
         "score": 0,
@@ -111,7 +110,7 @@ def update_post(
     return updated.data[0]
 
 
-# 👍 Like a post
+
 @router.post("/{pid}/like")
 def like_post(pid: str, user=Depends(user_auth.get_current_user)):
     res = supabase.table("posts").select("likes").eq("pid", pid).single().execute()
@@ -123,7 +122,6 @@ def like_post(pid: str, user=Depends(user_auth.get_current_user)):
     return {"pid": pid, "likes": new_likes}
 
 
-# 👎 Dislike a post
 @router.post("/{pid}/dislike")
 def dislike_post(pid: str, user=Depends(user_auth.get_current_user)):
     res = supabase.table("posts").select("dislikes").eq("pid", pid).single().execute()
