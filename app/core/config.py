@@ -79,7 +79,6 @@ class APISettings(BaseSettings):
     
     news_api_key: str = os.getenv("NEWS_API_KEY", "")
     fact_check_api_key: str = os.getenv("FACT_CHECK_API_KEY", "")
-    callback_url: str = os.getenv("CALLBACK_URL", "http://localhost:8000/auth/callback")
     
     class Config:
         env_prefix = "API_"
