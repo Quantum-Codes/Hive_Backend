@@ -1,11 +1,13 @@
 import app
-from fastapi import Request, APIRouter,Depends,HTTPException
+from fastapi import Request, APIRouter,Depends,HTTPException,Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import RedirectResponse
 from typing import List,Optional
 from app.core.config import APISettings
 from app.utils.supabase_client import get_supabase_client
 from datetime import datetime,timedelta
+import jwt 
+from app.models.databases import SUPABASE_KEY
 
 supabase = get_supabase_client()
 REDIRECT_URL = APISettings().callback_url
@@ -62,6 +64,7 @@ async def auth_callback(request: Request):
 
         username = email.split("@")[0] if email else ""
 
+
         supabase.table("users").upsert({
             "uid": user_id,
             "email": email,
@@ -69,7 +72,6 @@ async def auth_callback(request: Request):
             "username": username,
             'created_at' : created_at,
             'bio' : "Hey there ! I am using HIVE right now"
-            
             ## TODO profile_pic_url
 
         }).execute()
@@ -80,6 +82,56 @@ async def auth_callback(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+def decode_supabase_token(token: str):
+    try:
+        decoded = jwt.decode(token, SUPABASE_KEY, algorithms=["HS256"])
+        return decoded
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+@router.post("/defaults")
+async def login(authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Authorization header missing or invalid")
+
+    token = authorization.split(" ")[1]
+    decoded_token = decode_supabase_token(token)
+    
+    uid = decoded_token.get("sub")
+    if not uid:
+        raise HTTPException(status_code=400, detail="UID not found in token")
+
+    auth_response = supabase.auth.api.get_user(uid)
+    if not auth_response.user:
+        raise HTTPException(status_code=404, detail="UID not found in authentication table")
+
+    user_response = supabase.table("users").select("*").eq("uid", uid).execute()
+    if user_response.data:
+        return {"message": "User already exists", "uid": uid}
+
+    # Extract info from token
+    email = decoded_token.get("email")
+    full_name = decoded_token.get("user_metadata", {}).get("full_name", "")
+    username = email.split("@")[0] if email else ""
+
+    # Insert into users table
+    insert_response = supabase.table("users").insert({
+        "uid": uid,
+        "email": email,
+        "full_name": full_name,
+        "username": username,
+        "bio": "Hey there! I am using HIVE right now",
+        "profile_url": " "
+    }).execute()
+
+    if insert_response.error:
+        raise HTTPException(status_code=500, detail=insert_response.error.message)
+
+    return {"message": "User created successfully", "uid": uid}
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     try:

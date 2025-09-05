@@ -29,10 +29,8 @@ def create_post(
     user = Depends(user_auth.get_current_user)
 ):
     new_post = {
-        'pid': post.pid,
         'owner_id': user['uid'],
         'content': post.content,
-        'media_url': post.media_url,  # frontend must provide this from /storage/upload/media
         'created_at': datetime.utcnow(),
         'likes': 0,
         'dislikes': 0,
@@ -46,7 +44,6 @@ def create_post(
     return {
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
-        "media_url": res.data[0]["media_url"],
         "owner_id": user["uid"],
         "author_display_name": user.get("username"),
         "likes": 0,
@@ -104,7 +101,6 @@ def update_post(
 
     updated = supabase.table('posts').update({
         'content': post.content,
-        'media_url': post.media_url or res.data['media_url']
     }).eq('pid', pid).execute()
 
     return updated.data[0]
