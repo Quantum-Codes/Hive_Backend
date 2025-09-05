@@ -7,7 +7,6 @@ from app.core.supabase import get_supabase_client
 from app.core.config import settings
 
 supabase = get_supabase_client()
-REDIRECT_URL = APISettings().callback_url
 
 # this tells FastAPI to look for "Authorization: Bearer <token>"
 bearer_scheme = HTTPBearer()

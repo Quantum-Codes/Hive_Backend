@@ -10,7 +10,7 @@
 # - Integration with post service
 # - Verification result storage and retrieval
 
-from app.agents.scrapper_agent.scraper_agent.web_scraper import WebScraper
+from app.agents.scraper_agent.web_scraper import WebScraper
 from app.agents.search_agent.search_agent import get_links, search_web
 from app.models.rag import RagRequest
 from app.models.scraper import ScraperResult
@@ -19,12 +19,12 @@ from app.agents.rag_agent.rag_agent import VerificationRAGPipeline
     
 
 pipeline = VerificationRAGPipeline()
-web_scrapper = WebScraper()
+web_scraper = WebScraper()
 
 
 def get_context(post_data: PostContentRequest):
     links = get_links(post_data)
-    context = [web_scrapper.webscrape(link) for link in links]
+    context = [web_scraper.webscrape(link) for link in links]
     return context
 
 

@@ -108,7 +108,6 @@ Server: `http://localhost:8000`
 ## 🔐 Authentication (Supabase OAuth)
 
 -   GET `/user/login` → Redirect to Google OAuth
--   GET `/user/auth/callback` → Handles OAuth callback, upserts user record
 -   GET `/user/users/me` → Get current user (requires `Authorization: Bearer <jwt>`)
 -   GET `/user/logout` → Sign out
 
