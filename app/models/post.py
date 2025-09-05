@@ -46,7 +46,6 @@ class ShowPost(BaseModel):
     tags: Optional[List[str]] = []
 
     # Verification / Moderation
-    is_verified: bool = False
     moderation_status: str = "pending"
 
     # Timestamps

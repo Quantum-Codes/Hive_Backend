@@ -32,7 +32,7 @@ def search_users(name: str = Query(..., description="Search string for username"
     if not search_str:
         raise HTTPException(status_code=400, detail="Search string cannot be empty")
 
-    res = supabase.table("users").select("*").ilike("username", f"%{search_str}%").execute()
+    res = supabase.table("users").select("*").ilike("full_name", f"%{search_str}%").execute()
 
     if not res.data:
         raise HTTPException(status_code=404, detail="No users found")
