@@ -15,22 +15,6 @@ from typing import Optional
 from datetime import datetime
 from typing import List
 
-class User(BaseModel):
-    uid: str
-    name: str
-    email: EmailStr
-    age: int
-    gender: str
-    password: str
-    is_active: bool = True
-    displayName: Optional[str] = None
-    bio: Optional[str] = None
-    avatar: Optional[str] = None   # profile picture url
-    created_at: datetime = datetime.utcnow()
-
-    class Config:
-        orm_mode = True
-
 
 
 class Post(BaseModel):
@@ -70,65 +54,11 @@ class Comment(BaseModel):
     class Config:
         orm_mode = True
 
-'''
-class Community(BaseModel):
-    cid: str
-    name: str
-    description: Optional[str] = None
-    owner_id: str
-    created_at: datetime = datetime.utcnow()
-    members_count: int = 1
-
-    class Config:
-        orm_mode = True
-'''
-class Verification(BaseModel):
-    vid: str
-    post_id: str
-    verified_by: str
-    status: str  # pending, approved, rejected
-    checked_at: datetime = datetime.utcnow()
-
-    class Config:
-        orm_mode = True
-
-
-class ShowUser(BaseModel):
-        name : str
-        email : EmailStr
-        age: int
-        gender :  str
-        is_active: bool = True
-        displayName: Optional[str] = None
-        bio: Optional[str] = None
-        avatar: Optional[str] = None   # profile picture url
-
-        class Config:
-                orm_mode = True
 
 #For the user authentication and the signup 
 
-#TODO do it now after you are possibly having the break for the water drink 
-
-class SignUp(BaseModel):
-        name : str
-        email : EmailStr
-        age : int
-        gender : str 
-        password : str
-        displayName: Optional[str] = None
-        bio: Optional[str] = None
-        avatar: Optional[str] = None   # profile picture url
-        created_at: datetime = datetime.utcnow()
 
 
-
-
-class Login(BaseModel):
-    email : EmailStr
-    password : str
-    class Config:
-            orm_mode  = True
 
 
 
@@ -168,11 +98,4 @@ class ShowPost(BaseModel):
 
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: str | None = None
-    scopes: list[str] = []
 
