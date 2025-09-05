@@ -1,5 +1,5 @@
 import app
-from fastapi import Request, APIRouter,Depends,HTTPException,Header
+from fastapi import Request, APIRouter,Depends,HTTPException,Header,Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import RedirectResponse
 from typing import List,Optional
@@ -21,6 +21,25 @@ router = APIRouter(
     prefix= '/user',
     tags=['Users']
 )
+
+
+
+def polished_str(searchTxt : str):
+    return searchTxt.strip().lower()
+
+@router.get("/search")
+def search_users(name: str = Query(..., description="Search string for username")):
+    search_str = polished_str(name)
+
+    if not search_str:
+        raise HTTPException(status_code=400, detail="Search string cannot be empty")
+
+    res = supabase.table("users").select("*").ilike("username", f"%{search_str}%").execute()
+
+    if not res.data:
+        raise HTTPException(status_code=404, detail="No users found")
+
+    return res.data or []
 
 @router.get("/login")
 async def login_with_google():
