@@ -6,6 +6,7 @@ from app.core.config import APISettings
 from app.core.supabase import get_supabase_client
 from datetime import datetime,timedelta
 from app.core.config import settings
+import traceback
 
 supabase = get_supabase_client()
 
@@ -52,6 +53,8 @@ def decode_supabase_token(token: str):
             raise HTTPException(status_code=401, detail="Invalid token")
         return user_response
     except Exception as e:
+        print(e)
+        print(traceback.format_exc())
         raise HTTPException(status_code=401, detail=f"Token validation failed: {str(e)}")
 
 
@@ -102,11 +105,14 @@ async def login(authorization: Optional[str] = Header(None)):
         return {"message": "User created successfully", "uid": uid}
         
     except Exception as e:
+        print(e)
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     try:
         token = credentials.credentials
+        print(token)
         user_from_jwt = supabase.auth.get_user(token)
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Not logged in")
@@ -116,6 +122,9 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBea
             raise HTTPException(status_code=404, detail="User profile not found")
         return profile_response.data[0]
     except Exception as e:
+        # print traceback for debugging
+        print(e)
+        print(traceback.format_exc())
         raise HTTPException(status_code=401, detail=f"Invalid token or user not found: {str(e)}")
 
 
