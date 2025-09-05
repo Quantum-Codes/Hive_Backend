@@ -88,7 +88,7 @@ class APISettings(BaseSettings):
 class LoggingSettings(BaseSettings):
     """Logging configuration."""
     
-    level: str = os.getenv("LOG_LEVEL", "INFO")
+    level: str = os.getenv("LOG_LEVEL", "NOSET")
     file: str = os.getenv("LOG_FILE", "logs/hive_backend.log")
     
     class Config:
