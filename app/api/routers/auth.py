@@ -40,24 +40,6 @@ def search_users(name: str = Query(..., description="Search string for username"
     return res.data or []
 
 
-
-def decode_supabase_token(token: str):
-    """
-    Validate Supabase JWT token using Supabase's built-in verification.
-    This is more secure than manual JWT decoding.
-    """
-    try:
-        # Use Supabase's built-in JWT verification instead of manual decoding
-        user_response = supabase.auth.get_user(token)
-        if not user_response:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return user_response
-    except Exception as e:
-        print(e)
-        print(traceback.format_exc())
-        raise HTTPException(status_code=401, detail=f"Token validation failed: {str(e)}")
-
-
 @router.post("/defaults")
 async def login(authorization: Optional[str] = Header(None)):
     """
@@ -72,12 +54,11 @@ async def login(authorization: Optional[str] = Header(None)):
     try:
         # Use standardized token validation
         user_from_jwt = supabase.auth.get_user(token)
-        print(user_from_jwt)
-        print(type(user_from_jwt))
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        uid = user_from_jwt.user.id
+        user_from_jwt = user_from_jwt.user
+        uid = user_from_jwt.id
         if not uid:
             raise HTTPException(status_code=400, detail="UID not found in token")
 
@@ -98,7 +79,7 @@ async def login(authorization: Optional[str] = Header(None)):
             "full_name": full_name,
             "username": username,
             "bio": "Hey there! I am using HIVE right now",
-            "profile_pic_url": ""  # Fixed field name consistency
+            "profile_pic_url": "" 
         }).execute()
 
         if insert_response.error:
@@ -114,11 +95,11 @@ async def login(authorization: Optional[str] = Header(None)):
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     try:
         token = credentials.credentials
-        print(token)
         user_from_jwt = supabase.auth.get_user(token)
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Not logged in")
-        user_id = user_from_jwt.user.id
+        user_from_jwt = user_from_jwt.user
+        user_id = user_from_jwt.id
         profile_response = supabase.table("users").select("*").eq("uid", user_id).execute()
         if not profile_response.data:
             raise HTTPException(status_code=404, detail="User profile not found")
