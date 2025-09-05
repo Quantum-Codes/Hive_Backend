@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from typing import Optional
 from app.core.config import APISettings
 from app.core.supabase import get_supabase_client
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,timezone
 from app.core.config import settings
 
 supabase = get_supabase_client()
@@ -93,7 +93,8 @@ async def login(authorization: Optional[str] = Header(None)):
             "full_name": full_name,
             "username": username,
             "bio": "Hey there! I am using HIVE right now",
-            "profile_pic_url": ""  # Fixed field name consistency
+            "profile_pic_url": "",
+            "created_at": datetime.now(timezone.utc)
         }).execute()
 
         if insert_response.error:
