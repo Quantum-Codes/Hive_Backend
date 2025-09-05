@@ -218,8 +218,8 @@ class WebScraper:
         return ScraperResult(
             source=url,
             title=title,
-            article_summary="Generic extraction, no summary available.",
-            date_published=datetime.datetime.now(),  # Use current time as a fallback
+            article_summary=None,
+            date_published=None,  # Use current time as a fallback
             content=articles,
         )
 
