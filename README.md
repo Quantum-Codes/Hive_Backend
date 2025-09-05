@@ -169,7 +169,7 @@ Prefix: `/post`
 -   Supabase: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 -   Gemini: `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBED_MODEL`, `GEMINI_MAX_TOKENS`, `GEMINI_TEMPERATURE`
 -   Vector DB (Chroma): `CHROMA_PERSIST_PATH`, `CHROMA_COLLECTION`
--   API: `NEWS_API_KEY`, `FACT_CHECK_API_KEY`, `CALLBACK_URL`
+-   API: `NEWS_API_KEY`, `FACT_CHECK_API_KEY`
 -   Security: `SECRET_KEY`, `ALGORITHM`, token expiries
 -   File upload, logging, rate limit, email, monitoring
 
@@ -187,6 +187,8 @@ GEMINI_MODEL=gemini-pro
 GEMINI_EMBED_MODEL=models/embedding-001
 GEMINI_MAX_TOKENS=1000
 GEMINI_TEMPERATURE=0.7
+GOOGLE_CUSTOM_SEARCH_API=...
+SEARCH_ENGINE_ID=...
 
 # Chroma
 CHROMA_PERSIST_PATH=.chroma
@@ -195,7 +197,6 @@ CHROMA_COLLECTION=verification_docs
 # API
 NEWS_API_KEY=...
 FACT_CHECK_API_KEY=...
-CALLBACK_URL=http://localhost:8000/auth/callback
 
 # Security
 SECRET_KEY=change-me

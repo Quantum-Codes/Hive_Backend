@@ -38,66 +38,6 @@ def search_users(name: str = Query(..., description="Search string for username"
 
     return res.data or []
 
-@router.get("/login")
-async def login_with_google():
-    try:
-        oauth_response = supabase.auth.sign_in_with_oauth(
-            {"provider": "google", "options": {"redirect_to": REDIRECT_URL}}
-        )
-        return RedirectResponse(url=oauth_response.url)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/auth/callback")
-async def auth_callback(request: Request):
-    """
-    this receives the authorization code and exchanges it for a user session.
-    """
-    try:
-        code = request.query_params.get("code")
-
-        if not code:
-            raise HTTPException(status_code=400, detail="Authorization code not found in request.")
-
-        session_response = supabase.auth.exchange_code_for_session(
-            {"auth_code": code, "code_verifier": None}
-        )
-
-        if session_response.error:
-            raise HTTPException(
-                status_code=session_response.error.status,
-                detail=session_response.error.message,
-            )
-        
-        user_data = session_response.user.model_dump()
-
-        user_id = user_data.get("id")
-        email = user_data.get("email")
-        created_at = user_data.get("created_at")
-        
-        full_name = user_data.get("user_metadata", {}).get("full_name", "")
-
-        username = email.split("@")[0] if email else ""
-
-
-        supabase.table("users").upsert({
-            "uid": user_id,
-            "email": email,
-            "full_name": full_name,
-            "username": username,
-            'created_at' : created_at,
-            'bio' : "Hey there ! I am using HIVE right now"
-            ## TODO profile_pic_url
-
-        }).execute()
-
-        
-        return {"message": "User successfully authenticated!", "user_data": user_data}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 def decode_supabase_token(token: str):
     user = supabase.auth.get_user(token)
