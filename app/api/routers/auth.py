@@ -1,15 +1,13 @@
-import app
 from fastapi import Request, APIRouter,Depends,HTTPException,Header,Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import RedirectResponse
-from typing import List,Optional
+from typing import Optional
 from app.core.config import APISettings
 from app.core.supabase import get_supabase_client
 from datetime import datetime,timedelta
 from app.core.config import settings
 
 supabase = get_supabase_client()
-REDIRECT_URL = APISettings().callback_url
 
 # this tells FastAPI to look for "Authorization: Bearer <token>"
 bearer_scheme = HTTPBearer()
@@ -44,7 +42,7 @@ def search_users(name: str = Query(..., description="Search string for username"
 async def login_with_google():
     try:
         oauth_response = supabase.auth.sign_in_with_oauth(
-            {"provider": "google", "options": {"redirect_to": REDIRECT_URL}}
+            {"provider": "google", "options": {"redirect_to": settings.api.callback_url}}
         )
         return RedirectResponse(url=oauth_response.url)
     except Exception as e:
@@ -184,7 +182,7 @@ async def login(authorization: Optional[str] = Header(None)):
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     try:
         token = credentials.credentials
-        user_from_jwt = supabase.auth.get_user_from_jwt(token)
+        user_from_jwt = supabase.auth.get_user(token)
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Not logged in")
         user_id = user_from_jwt.id
