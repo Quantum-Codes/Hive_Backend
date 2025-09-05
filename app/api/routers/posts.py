@@ -91,7 +91,7 @@ def delete_post(pid: str, user = Depends(auth.get_current_user)):
 @router.put('/{pid}', response_model=post.ShowPost)
 def update_post(
     pid: str,
-    post_data: post.Post,
+    post_content: str,
     user = Depends(auth.get_current_user)
 ):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
@@ -99,7 +99,7 @@ def update_post(
         raise HTTPException(status_code=403, detail='Not authorized')
 
     updated = supabase.table('posts').update({
-        'content': post_data.content,
+        'content': post_content,
     }).eq('pid', pid).execute()
 
     return updated.data[0]
