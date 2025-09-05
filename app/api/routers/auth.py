@@ -72,7 +72,7 @@ async def login(authorization: Optional[str] = Header(None)):
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        uid = user_from_jwt.id
+        uid = user_from_jwt.user.id
         if not uid:
             raise HTTPException(status_code=400, detail="UID not found in token")
 
@@ -112,7 +112,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBea
         user_from_jwt = supabase.auth.get_user(token)
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Not logged in")
-        user_id = user_from_jwt.id
+        user_id = user_from_jwt.user.id
         profile_response = supabase.table("users").select("*").eq("uid", user_id).execute()
         if not profile_response.data:
             raise HTTPException(status_code=404, detail="User profile not found")
