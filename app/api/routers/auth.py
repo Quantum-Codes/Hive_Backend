@@ -1,12 +1,9 @@
-import app
 from fastapi import Request, APIRouter,Depends,HTTPException,Header,Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import RedirectResponse
-from typing import List,Optional
+from typing import Optional
 from app.core.config import APISettings
 from app.core.supabase import get_supabase_client
-from datetime import datetime,timedelta
-import jwt 
 from app.core.config import settings
 
 supabase = get_supabase_client()
@@ -103,13 +100,10 @@ async def auth_callback(request: Request):
 
 
 def decode_supabase_token(token: str):
-    try:
-        decoded = jwt.decode(token, settings.supabase.anon_key, algorithms=["HS256"])
-        return decoded
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    user = supabase.auth.get_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return user
 
 
 @router.post("/defaults")
@@ -118,9 +112,8 @@ async def login(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=400, detail="Authorization header missing or invalid")
 
     token = authorization.split(" ")[1]
-    decoded_token = decode_supabase_token(token)
-    
-    uid = decoded_token.get("sub")
+    user_from_jwt = decode_supabase_token(token)
+    uid = user_from_jwt.id
     if not uid:
         raise HTTPException(status_code=400, detail="UID not found in token")
 
@@ -133,8 +126,8 @@ async def login(authorization: Optional[str] = Header(None)):
         return {"message": "User already exists", "uid": uid}
 
     # Extract info from token
-    email = decoded_token.get("email")
-    full_name = decoded_token.get("user_metadata", {}).get("full_name", "")
+    email = user_from_jwt.email
+    full_name = user_from_jwt.user_metadata.get("full_name", "") if user_from_jwt.user_metadata else ""
     username = email.split("@")[0] if email else ""
 
     # Insert into users table
@@ -155,7 +148,7 @@ async def login(authorization: Optional[str] = Header(None)):
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     try:
         token = credentials.credentials
-        user_from_jwt = supabase.auth.get_user_from_jwt(token)
+        user_from_jwt = supabase.auth.get_user(token)
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Not logged in")
         user_id = user_from_jwt.id
