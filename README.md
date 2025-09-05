@@ -167,11 +167,10 @@ Prefix: `/post`
 `app/core/config.py` exposes `settings` with nested sections:
 
 -   Supabase: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
--   Gemini: `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBED_MODEL`, `GEMINI_MAX_TOKENS`, `GEMINI_TEMPERATURE`
+-   Gemini: `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBED_MODEL`, `GEMINI_MAX_TOKENS`, `GEMINI_TEMPERATURE`, `GOOGLE_CUSTOM_SEARCH_API`, `SEARCH_ENGINE_ID`
 -   Vector DB (Chroma): `CHROMA_PERSIST_PATH`, `CHROMA_COLLECTION`
 -   API: `NEWS_API_KEY`, `FACT_CHECK_API_KEY`
 -   Security: `SECRET_KEY`, `ALGORITHM`, token expiries
--   File upload, logging, rate limit, email, monitoring
 
 ## 🔧 Environment Variables (.env)
 
