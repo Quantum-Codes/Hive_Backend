@@ -53,6 +53,7 @@ async def login(authorization: Optional[str] = Header(None)):
     
     try:
         # Use standardized token validation
+        print(token)
         user_from_jwt = supabase.auth.get_user(token)
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Invalid token")

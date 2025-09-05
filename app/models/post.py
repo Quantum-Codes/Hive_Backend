@@ -9,7 +9,6 @@ class Post(BaseModel):
     owner_id: str
     content: str
     avatar_user : Optional[str] =None
-    created_at: datetime = datetime.now(timezone.utc)
     #updated_at: Optional[datetime] = None
 
     class Config:
