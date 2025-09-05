@@ -101,8 +101,6 @@ async def login(authorization: Optional[str] = Header(None)):
 
         return {"message": "User created successfully", "uid": uid}
         
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
