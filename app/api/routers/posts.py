@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from app.models import post
 from app.core.supabase import get_supabase_client
-from . import user_auth
+from . import auth
 from datetime import datetime
 from typing import List
 from redis import Redis
@@ -25,7 +25,7 @@ supabase = get_supabase_client()
 @router.post('/', response_model=post.ShowPost)
 def create_post(
     post_data: post.Post,
-    user = Depends(user_auth.get_current_user)
+    user = Depends(auth.get_current_user)
 ):
     new_post = {
         'owner_id': user['uid'],
@@ -79,7 +79,7 @@ def get_single_post(pid: str):
 
 #  Delete post
 @router.delete('/{pid}')
-def delete_post(pid: str, user = Depends(user_auth.get_current_user)):
+def delete_post(pid: str, user = Depends(auth.get_current_user)):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
 
     if not res.data or res.data['owner_id'] != user['uid']:
@@ -92,7 +92,7 @@ def delete_post(pid: str, user = Depends(user_auth.get_current_user)):
 def update_post(
     pid: str,
     post_data: post.Post,
-    user = Depends(user_auth.get_current_user)
+    user = Depends(auth.get_current_user)
 ):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
     if not res.data or res.data['owner_id'] != user['uid']:
@@ -107,7 +107,7 @@ def update_post(
 
 
 @router.post("/{pid}/like")
-def like_post(pid: str, user=Depends(user_auth.get_current_user)):
+def like_post(pid: str, user=Depends(auth.get_current_user)):
     res = supabase.table("posts").select("likes").eq("pid", pid).single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -118,7 +118,7 @@ def like_post(pid: str, user=Depends(user_auth.get_current_user)):
 
 
 @router.post("/{pid}/dislike")
-def dislike_post(pid: str, user=Depends(user_auth.get_current_user)):
+def dislike_post(pid: str, user=Depends(auth.get_current_user)):
     res = supabase.table("posts").select("dislikes").eq("pid", pid).single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Post not found")

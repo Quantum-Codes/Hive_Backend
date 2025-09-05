@@ -1,11 +1,11 @@
 from fastapi import APIRouter, FastAPI
-from app.api.routers import post_routes, storage, user_auth
+from app.api.routers import posts, storage, auth
 from app.core.config import settings, is_development
 
 routes = [
-    post_routes.router,
+    posts.router,
     storage.router,
-    user_auth.router
+    auth.router
 ]
 
 app = FastAPI(
