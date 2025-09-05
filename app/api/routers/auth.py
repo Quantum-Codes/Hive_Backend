@@ -112,7 +112,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBea
         raise HTTPException(status_code=401, detail=f"Invalid token or user not found: {str(e)}")
 
 
-@router.get("/users/me")
+@router.get("/me")
 def get_current_logged_in_user(user=Depends(get_current_user)):
     return {"message": "User is authenticated.", "user": user}
 
