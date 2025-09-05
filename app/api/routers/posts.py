@@ -30,7 +30,7 @@ def create_post(
     new_post = {
         'owner_id': user['uid'],
         'content': post_data.content,
-        'created_at': datetime.utcnow(),
+        'created_at': datetime.utcnow().isoformat(),
         'likes': 0,
         'dislikes': 0,
         'is_verified': False,
