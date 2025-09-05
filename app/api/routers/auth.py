@@ -47,7 +47,7 @@ def decode_supabase_token(token: str):
     """
     try:
         # Use Supabase's built-in JWT verification instead of manual decoding
-        user_response = supabase.auth.get_user_from_jwt(token)
+        user_response = supabase.auth.get_user(token)
         if not user_response:
             raise HTTPException(status_code=401, detail="Invalid token")
         return user_response
@@ -68,7 +68,7 @@ async def login(authorization: Optional[str] = Header(None)):
     
     try:
         # Use standardized token validation
-        user_from_jwt = supabase.auth.get_user_from_jwt(token)
+        user_from_jwt = supabase.auth.get_user(token)
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Invalid token")
         
