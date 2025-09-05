@@ -38,7 +38,6 @@ class Post(BaseModel):
     owner_id: str
     content: str
     avatar_user : Optional[str] =None
-    media_url: Optional[str] = None
     created_at: datetime = datetime.utcnow()
     #updated_at: Optional[datetime] = None
     likes: int = 0
@@ -136,7 +135,6 @@ class Login(BaseModel):
 class ShowPost(BaseModel):
     pid : str
     content: str
-    media_url: Optional[str] = None
     
     # Author info (subset of User)
     author_name: str
