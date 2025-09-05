@@ -34,33 +34,3 @@ async def upload_profile_pic(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/upload/media")
-async def upload_media(
-    file: UploadFile = File(...),
-    user: dict = Depends(get_current_user)  # get logged in user row
-):
-    try:
-        file_ext = file.filename.split(".")[-1]
-        file_name = f"{uuid.uuid4()}.{file_ext}"
-
-        # Upload to the user-media bucket
-        supabase.storage.from_("user-media").upload(file_name, file.file)
-
-        # Public URL
-        url = supabase.storage.from_("user-media").get_public_url(file_name)
-
-        # ✅ Insert into posts table (only owner_id and media_url exist)
-        insert_response = supabase.table("posts").insert({
-            "owner_id": user["uid"],   # use uid from users table
-            "media_url": url
-        }).execute()
-        
-        if insert_response.error:
-            raise HTTPException(status_code=500, detail=f"Failed to save media: {insert_response.error.message}")
-
-        return {"media_url": url}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
