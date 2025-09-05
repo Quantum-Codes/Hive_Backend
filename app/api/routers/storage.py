@@ -25,7 +25,10 @@ async def upload_profile_pic(
         url = supabase.storage.from_("user-profile-pics").get_public_url(file_name)
 
         # ✅ Update user's table with new profile pic
-        supabase.table("users").update({"profile_pic_url": url}).eq("uid", user_id).execute()
+        update_response = supabase.table("users").update({"profile_pic_url": url}).eq("uid", user_id).execute()
+        
+        if update_response.error:
+            raise HTTPException(status_code=500, detail=f"Failed to update profile picture: {update_response.error.message}")
 
         return {"profile_pic_url": url}
 
@@ -49,10 +52,13 @@ async def upload_media(
         url = supabase.storage.from_("user-media").get_public_url(file_name)
 
         # ✅ Insert into posts table (only owner_id and media_url exist)
-        supabase.table("posts").insert({
+        insert_response = supabase.table("posts").insert({
             "owner_id": user["uid"],   # use uid from users table
             "media_url": url
         }).execute()
+        
+        if insert_response.error:
+            raise HTTPException(status_code=500, detail=f"Failed to save media: {insert_response.error.message}")
 
         return {"media_url": url}
 
