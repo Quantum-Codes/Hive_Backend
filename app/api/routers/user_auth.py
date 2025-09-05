@@ -4,10 +4,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import RedirectResponse
 from typing import List,Optional
 from app.core.config import APISettings
-from app.utils.supabase_client import get_supabase_client
+from app.core.supabase import get_supabase_client
 from datetime import datetime,timedelta
 import jwt 
-from app.models.databases import SUPABASE_KEY
+from app.core.config import settings
 
 supabase = get_supabase_client()
 REDIRECT_URL = APISettings().callback_url
@@ -104,7 +104,7 @@ async def auth_callback(request: Request):
 
 def decode_supabase_token(token: str):
     try:
-        decoded = jwt.decode(token, SUPABASE_KEY, algorithms=["HS256"])
+        decoded = jwt.decode(token, settings.supabase.anon_key, algorithms=["HS256"])
         return decoded
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")

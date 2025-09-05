@@ -10,12 +10,12 @@
 # - Integration with post service
 # - Verification result storage and retrieval
 
-from app.agents.scrapers.scraper_agent.web_scraper import WebScraper
+from app.agents.scrapper_agent.scraper_agent.web_scraper import WebScraper
 from app.agents.search_agent.search_agent import get_links, search_web
 from app.models.rag import RagRequest
 from app.models.scraper import ScraperResult
-from app.models.schemas import PostContentRequest, PostVerificationRequest
-from agents.rag_agent.rag_agent import VerificationRAGPipeline
+from app.models.post import PostContentRequest, PostVerificationRequest
+from app.agents.rag_agent.rag_agent import VerificationRAGPipeline
     
 
 pipeline = VerificationRAGPipeline()

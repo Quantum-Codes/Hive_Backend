@@ -17,7 +17,7 @@ class Post(BaseModel):
     is_verified: bool = False
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PostContentRequest(BaseModel):
     pid: str
@@ -60,7 +60,7 @@ class ShowPost(BaseModel):
     #edited: bool = False --For now we are not gonna have any edit button in the post 
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 

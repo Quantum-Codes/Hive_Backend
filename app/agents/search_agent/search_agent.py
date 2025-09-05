@@ -1,7 +1,7 @@
 import requests
 import os
 
-from app.models.schemas import PostContentRequest
+from app.models.post import PostContentRequest
 
 def search_web(post_content: str):
     api_key = os.getenv("GOOGLE_CUSTOM_SEARCH_API")

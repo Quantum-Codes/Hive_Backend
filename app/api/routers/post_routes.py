@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from app.models import schemas
-from app.utils.supabase_client import get_supabase_client
+from app.models import post
+from app.core.supabase import get_supabase_client
 from . import user_auth
 from datetime import datetime
 from typing import List
 from redis import Redis
 from rq import Queue
-from ...services.verification_service import verify_post
-from . import user_auth
+from app.services.verification_service import verify_post
 
 
 router = APIRouter(
@@ -23,14 +22,14 @@ supabase = get_supabase_client()
 
 
 #  Upload media + create a post
-@router.post('/', response_model=schemas.ShowPost)
+@router.post('/', response_model=post.ShowPost)
 def create_post(
-    post: schemas.Post,
+    post_data: post.Post,
     user = Depends(user_auth.get_current_user)
 ):
     new_post = {
         'owner_id': user['uid'],
-        'content': post.content,
+        'content': post_data.content,
         'created_at': datetime.utcnow(),
         'likes': 0,
         'dislikes': 0,
@@ -40,7 +39,7 @@ def create_post(
     res = supabase.table('posts').insert(new_post).execute()
     if not res.data:
         raise HTTPException(status_code=400, detail='Error creating the post')
-    task_queue.enqueue(verify_post, schemas.PostContentRequest(pid=post.pid, content=post.content))
+    task_queue.enqueue(verify_post, post.PostContentRequest(pid=post_data.pid, content=post_data.content))
     return {
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
@@ -56,21 +55,21 @@ def create_post(
     }
 
 #  Get all posts
-@router.get('/', response_model=List[schemas.ShowPost])
+@router.get('/', response_model=List[post.ShowPost])
 def get_all_posts():
     res = supabase.table('posts').select('*').execute()
     return res.data
 
 
 #  Get user's posts
-@router.get('/users/{uid}/posts', response_model=List[schemas.ShowPost])
+@router.get('/users/{uid}/posts', response_model=List[post.ShowPost])
 def user_posts(uid: str):
     res = supabase.table('posts').select('*').eq('owner_id', uid).execute()
     return res.data
 
 
 #  Get single post by pid
-@router.get('/{pid}', response_model=schemas.ShowPost)
+@router.get('/{pid}', response_model=post.ShowPost)
 def get_single_post(pid: str):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
     if not res.data:
@@ -89,10 +88,10 @@ def delete_post(pid: str, user = Depends(user_auth.get_current_user)):
     supabase.table('posts').delete().eq('pid', pid).execute()
     return {"message": f"Post with id {pid} deleted successfully"}
 
-@router.put('/{pid}', response_model=schemas.ShowPost)
+@router.put('/{pid}', response_model=post.ShowPost)
 def update_post(
     pid: str,
-    post: schemas.Post,
+    post_data: post.Post,
     user = Depends(user_auth.get_current_user)
 ):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
@@ -100,7 +99,7 @@ def update_post(
         raise HTTPException(status_code=403, detail='Not authorized')
 
     updated = supabase.table('posts').update({
-        'content': post.content,
+        'content': post_data.content,
     }).eq('pid', pid).execute()
 
     return updated.data[0]

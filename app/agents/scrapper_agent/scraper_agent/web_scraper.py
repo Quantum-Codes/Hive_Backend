@@ -14,8 +14,7 @@ import bs4, sys, os
 import requests, datetime
 from newspaper import Article
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../'))
-from models.scraper import ScraperResult
+from app.models.scraper import ScraperResult
 
 class WebScraper:
 

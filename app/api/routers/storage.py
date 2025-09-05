@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException,Depends
-from app.utils.supabase_client import get_supabase_client
+from app.core.supabase import get_supabase_client
 from app.api.routers.user_auth import get_current_user
 import uuid
 
