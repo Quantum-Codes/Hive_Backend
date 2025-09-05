@@ -6,15 +6,10 @@ from typing import List
 
 
 class Post(BaseModel):
-    pid: str
     owner_id: str
     content: str
     avatar_user : Optional[str] =None
-    created_at: datetime = datetime.now(timezone.utc)
     #updated_at: Optional[datetime] = None
-    likes: int = 0
-    dislikes : int = 0
-    is_verified: bool = False
 
     class Config:
         from_attributes = True

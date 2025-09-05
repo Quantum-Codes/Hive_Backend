@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from app.models import post
+from app.models import post, rag
 from app.core.supabase import get_supabase_client
 from . import auth
 from datetime import datetime
@@ -30,7 +30,7 @@ def create_post(
     new_post = {
         'owner_id': user['uid'],
         'content': post_data.content,
-        'created_at': datetime.utcnow(),
+        'created_at': datetime.utcnow().isoformat(),
         'likes': 0,
         'dislikes': 0,
         'is_verified': False,
@@ -49,8 +49,7 @@ def create_post(
         "dislikes": 0,
         "score": 0,
         "comments_count": 0,
-        "is_verified": False,
-        "moderation_status": "pending",
+        "verification_status": rag.RagResponse.UNVERIFIED,
         "created_at": res.data[0]["created_at"],
     }
 
@@ -91,7 +90,7 @@ def delete_post(pid: str, user = Depends(auth.get_current_user)):
 @router.put('/{pid}', response_model=post.ShowPost)
 def update_post(
     pid: str,
-    post_data: post.Post,
+    post_content: str,
     user = Depends(auth.get_current_user)
 ):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
@@ -99,7 +98,7 @@ def update_post(
         raise HTTPException(status_code=403, detail='Not authorized')
 
     updated = supabase.table('posts').update({
-        'content': post_data.content,
+        'content': post_content,
     }).eq('pid', pid).execute()
 
     return updated.data[0]
