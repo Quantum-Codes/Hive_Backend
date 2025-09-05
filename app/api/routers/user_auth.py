@@ -53,6 +53,27 @@ async def auth_callback(request: Request):
             )
         
         user_data = session_response.user.model_dump()
+
+        user_id = user_data.get("id")
+        email = user_data.get("email")
+        created_at = user_data.get("created_at")
+        
+        full_name = user_data.get("user_metadata", {}).get("full_name", "")
+
+        username = email.split("@")[0] if email else ""
+
+        supabase.table("users").upsert({
+            "uid": user_id,
+            "email": email,
+            "full_name": full_name,
+            "username": username,
+            'created_at' : created_at,
+            'bio' : "Hey there ! I am using HIVE right now"
+            
+            ## TODO profile_pic_url
+
+        }).execute()
+
         
         return {"message": "User successfully authenticated!", "user_data": user_data}
 
@@ -67,7 +88,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBea
         if not user_from_jwt:
             raise HTTPException(status_code=401, detail="Not logged in")
         user_id = user_from_jwt.id
-        profile_response = supabase.table("users").select("*").eq("id", user_id).execute()
+        profile_response = supabase.table("users").select("*").eq("uid", user_id).execute()
         if not profile_response.data:
             raise HTTPException(status_code=404, detail="User profile not found")
         return profile_response.data[0]
