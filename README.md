@@ -1,265 +1,213 @@
 # 🐝 Hive Backend
 
-A Reddit-like application backend with an intelligent verification system powered by web scraping and LangChain RAG pipeline.
+A Reddit-like backend with content verification powered by web scraping and a Gemini-based RAG pipeline.
 
 ## 📖 Project Description
 
-Hive is a Reddit-like social media platform that includes an advanced content verification system. The backend is built with FastAPI and features:
-
--   **Content Verification**: Automated fact-checking using web scraping and AI
--   **RAG Pipeline**: LangChain-powered retrieval-augmented generation for content analysis
--   **Modern API**: FastAPI-based RESTful API with automatic documentation
--   **Scalable Architecture**: Modular design for easy maintenance and scaling
+Hive provides a FastAPI backend for posts, media storage, and user auth (Supabase), with automatic verification of post content via a RAG pipeline.
 
 ## 📂 Folder Structure
 
 ```
-hive-backend/
-├── app/                    # Main application package
-│   ├── main.py            # FastAPI entry point with health routes
-│   ├── api/               # API routes and endpoints
+Hive_Backend/
+├── app/
+│   ├── main.py
+│   ├── api/
 │   │   ├── __init__.py
-│   │   └── routes.py      # TODO: API route implementations
-│   ├── core/              # Configuration and settings
+│   │   └── routers/
+│   │       ├── routes.py                # placeholder
+│   │       ├── post_routes.py           # posts CRUD, reactions, listing
+│   │       ├── storage.py               # uploads to Supabase Storage
+│   │       └── user_auth.py             # Supabase OAuth, JWT auth helpers
+│   ├── core/
 │   │   ├── __init__.py
-│   │   └── config.py      # TODO: App configuration
-│   ├── models/            # Data models and schemas
+│   │   └── config.py                    # settings (Supabase, Gemini, Chroma, etc.)
+│   ├── models/
 │   │   ├── __init__.py
-│   │   └── schemas.py     # TODO: Pydantic models
-│   ├── services/          # Business logic layer
+│   │   ├── databases.py                 # (placeholder)
+│   │   ├── rag.py                       # RagRequest/Response enums
+│   │   ├── schemas.py                   # User, Post, Comment, ShowPost, tokens
+│   │   └── scraper.py                   # ScraperResult
+│   ├── agents/
 │   │   ├── __init__.py
-│   │   ├── post_service.py        # TODO: Post operations
-│   │   └── verification_service.py # TODO: Verification logic
-│   ├── agents/            # Agents responsible for key workflows
+│   │   ├── scrapers/
+│   │   │   └── scraper_agent/web_scraper.py
+│   │   ├── search_agent/
+│   │   │   └── search_agent.py
+│   │   └── rag_agent/
+│   │       └── rag_agent.py             # Gemini + Chroma pipeline
+│   ├── services/
 │   │   ├── __init__.py
-│   │   ├── search_agent/          # Search agent package
-│   │   │   └── __init__.py
-│   │   ├── scrapper_agent/        # Scrapper agent package
-│   │   │   └── __init__.py
-│   │   └── rag_agent/             # RAG agent package
-│   │       ├── __init__.py
-│   │       └── verification_pipeline.py # LangChain RAG pipeline implementation
-│   ├── scrapers/          # Web scraping module
-│   │   ├── __init__.py
-│   │   └── web_scraper.py # TODO: Web scraping implementation
-│   └── utils/             # Helper utilities
+│   │   ├── post_service.py              # (placeholder)
+│   │   └── verification_service.py      # verification orchestration
+│   └── utils/
 │       ├── __init__.py
-│       └── helpers.py     # TODO: Utility functions
-├── tests/                 # Test suite
+│       ├── helpers.py                   # (placeholder)
+│       └── supabase_client.py           # client factory (anon/admin)
+├── tests/
 │   ├── __init__.py
-│   └── test_main.py       # TODO: Test implementations
-├── requirements.txt       # Python dependencies
-├── README.md             # Project documentation
-└── venv/                 # Virtual environment (created by user)
+│   ├── test_main.py
+│   └── test_supabase_client.py
+├── pyproject.toml | poetry.lock | requirements.txt
+├── setup_env.py | env.example | README.md
+└── venv/
 ```
 
 ## ⚙️ Setup & Installation
 
 ### Prerequisites
 
--   Python 3.13 or higher
--   pip (Python package installer)
+-   Python 3.13+
+-   Supabase project (URL + anon + service role keys)
 
 ### Environment Setup
 
-1. **Clone the repository**
+1. Create and activate a virtual environment (recommended)
 
     ```bash
-    git clone <repository-url>
-    cd hive-backend
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
     ```
 
-2. **Create virtual environment**
+    Or with Poetry:
 
     ```bash
     pip install poetry
-    poetry python install 3.13
-    ```
-
-3. **Activate virtual environment**
-
-    ```bash
-    poetry env use python3.13
-    ```
-
-4. **Install dependencies**
-    ```bash
     poetry install
+    poetry run uvicorn app.main:app --reload
+    ```
+
+2. Environment variables
+
+    ```bash
+    python setup_env.py
+    # or
+    cp env.example .env
     ```
 
 ## ▶️ Running the Server
 
-### Development Mode
-
 ```bash
-# Make sure virtual environment is activated
-poetry run uvicorn app.main:app --reload
+uvicorn app.main:app --reload
 ```
 
-The server will start at `http://localhost:8000`
+Server: `http://localhost:8000`
 
-### API Documentation
+### API Docs
 
--   **Swagger UI**: `http://localhost:8000/docs`
--   **ReDoc**: `http://localhost:8000/redoc`
+-   Swagger UI: `http://localhost:8000/docs`
+-   ReDoc: `http://localhost:8000/redoc`
 
-### Health Check
+### Health
 
--   **Health endpoint**: `http://localhost:8000/health`
--   **Configuration test**: `http://localhost:8000/config/test`
+-   GET `/` → welcome
+-   GET `/health` → service health
+-   GET `/config/test` → config probe
 
-## 🔄 Verification Flow
+## 🔐 Authentication (Supabase OAuth)
 
-The content verification system follows this high-level flow:
+-   GET `/user/login` → Redirect to Google OAuth
+-   GET `/user/auth/callback` → Handles OAuth callback, upserts user record
+-   GET `/user/users/me` → Get current user (requires `Authorization: Bearer <jwt>`)
+-   GET `/user/logout` → Sign out
 
-1. **Content Submission**: User submits a post to the platform
-2. **Web Scraping**: System scrapes relevant sources for fact-checking
-3. **RAG Pipeline**: LangChain processes scraped data and post content
-4. **Classification**: AI classifies the post as verified/unverified/misleading
-5. **Result Storage**: Verification results are stored and displayed
+Use the Supabase session JWT as the Bearer token for authenticated routes.
 
-### Components:
+## 🗃️ Storage
 
--   **Scrapers**: Extract information from news sites, fact-checking sources
--   **RAG Pipeline**: LangChain-based retrieval and generation for content analysis
--   **Verification Service**: Business logic for processing and storing results
+-   POST `/storage/upload/profile-pic` → upload profile picture, updates `users.profile_pic_url`
+-   POST `/storage/upload/media` → upload post media, returns `media_url` (also inserts minimal post row)
 
-## 🚀 Next Steps
+## 📝 Posts API
 
-### Team Assignments:
+Prefix: `/post`
 
-**🧑‍💻 Dhruv Pokhriyal**
+-   POST `/` → create post (body: `Post`), enqueues verification
+-   GET `/` → list all posts
+-   GET `/users/{uid}/posts` → list posts by user
+-   GET `/{pid}` → get one post
+-   PUT `/{pid}` → update post (owner only)
+-   DELETE `/{pid}` → delete post (owner only)
+-   POST `/{pid}/like` → increment likes
+-   POST `/{pid}/dislike` → increment dislikes
 
--   **Primary**: RAG Pipeline (`app/agents/rag_agent/verification_pipeline.py`)
--   **Secondary**: Authentication system and API endpoints (helping Karthik)
--   **Collaboration**: Verification service and utilities
+## 🧠 Verification Pipeline
 
-**🧑‍💻 Ankit Sinha**
+-   Orchestrated in `app/services/verification_service.py` using:
+    -   `search_agent.get_links` to find sources
+    -   `scraper_agent.WebScraper` to fetch content
+    -   `VerificationRAGPipeline` (Gemini + Chroma) to verify/classify
 
--   **Primary**: Web Scraping (`app/scrapers/web_scraper.py`)
--   **Secondary**: Verification service coordination
--   **Collaboration**: Integration with RAG pipeline
+`VerificationRAGPipeline.verify(RagRequest)` returns:
 
-**🧑‍💻 Karthik**
+```json
+{
+    "status": "verified | unverified | personal_opinion | misinformation | factual_error | other",
+    "confidence": 0.0,
+    "answer": "...",
+    "supporting_context": ["..."],
+    "rationale": "...",
+    "metadata": { "post_id": "..." }
+}
+```
 
--   **Primary**: API Endpoints (`app/api/routes.py`)
--   **Secondary**: Post service and business logic
--   **Collaboration**: All team members for integration
+## 🧱 Models (Pydantic)
 
-### Immediate Tasks:
+-   `app/models/schemas.py`
+    -   `User`, `Post`, `Comment`, `ShowPost`, `Token`, `TokenData`
+    -   `PostContentRequest`, `PostVerificationRequest`
+-   `app/models/rag.py`
+    -   `RagRequest`, `RagResponse`
+-   `app/models/scraper.py`
+    -   `ScraperResult`
 
-1. **Implement API Routes** (`app/api/routes.py`) - **ASSIGNED TO: Karthik (with Dhruv's help for auth)**
+## 🛠️ Configuration
 
-    - User authentication endpoints
-    - Post CRUD operations
-    - Community management
-    - Verification endpoints
+`app/core/config.py` exposes `settings` with nested sections:
 
-2. **Configure Settings** (`app/core/config.py`) - **ASSIGNED TO: Team collaboration**
+-   Supabase: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+-   Gemini: `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBED_MODEL`, `GEMINI_MAX_TOKENS`, `GEMINI_TEMPERATURE`
+-   Vector DB (Chroma): `CHROMA_PERSIST_PATH`, `CHROMA_COLLECTION`
+-   API: `NEWS_API_KEY`, `FACT_CHECK_API_KEY`, `CALLBACK_URL`
+-   Security: `SECRET_KEY`, `ALGORITHM`, token expiries
+-   File upload, logging, rate limit, email, monitoring
 
-    - Database configuration
-    - API keys and environment variables
-    - Application settings
+## 🔧 Environment Variables (.env)
 
-3. **Create Data Models** (`app/models/schemas.py`) - **ASSIGNED TO: Team collaboration**
-    - User, Post, Community schemas
-    - Verification result models
-    - API request/response models
+```env
+# Supabase
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 
-### Core Features:
+# Gemini
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-pro
+GEMINI_EMBED_MODEL=models/embedding-001
+GEMINI_MAX_TOKENS=1000
+GEMINI_TEMPERATURE=0.7
 
-4. **Web Scraping** (`app/scrapers/web_scraper.py`) - **ASSIGNED TO: Ankit Sinha**
+# Chroma
+CHROMA_PERSIST_PATH=.chroma
+CHROMA_COLLECTION=verification_docs
 
-    - Implement scraping logic for fact-checking sources
-    - Handle different content types and sources
-    - Error handling and rate limiting
+# API
+NEWS_API_KEY=...
+FACT_CHECK_API_KEY=...
+CALLBACK_URL=http://localhost:8000/auth/callback
 
-5. **RAG Pipeline** (`app/agents/rag_agent/verification_pipeline.py`) - **ASSIGNED TO: Dhruv Pokhriyal**
+# Security
+SECRET_KEY=change-me
+```
 
-    - LangChain document retrieval
-    - Question-answering system
-    - Content classification logic
-
-6. **Business Logic** (`app/services/`) - **ASSIGNED TO: Team collaboration**
-    - Post service implementation
-    - Verification service logic
-    - User management services
-
-### Testing:
-
-7. **Test Suite** (`tests/`) - **ASSIGNED TO: Team collaboration**
-    - Unit tests for all components
-    - Integration tests for API endpoints
-    - Mock tests for external services
-
-## 🛠️ Development
-
-### Code Style
-
--   Follow PEP 8 guidelines
--   Use type hints where applicable
--   Document functions and classes
-
-### Testing
+## 🧪 Testing
 
 ```bash
-# Run tests
 pytest
-
-# Run with coverage
-pytest --cov=app
 ```
 
-### Environment Variables
+## 📄 Notes
 
-1. **Set up environment (recommended):**
-
-    ```bash
-    python setup_env.py
-    ```
-
-    **Or manually copy the template:**
-
-    ```bash
-    cp env.example .env
-    ```
-
-2. **Configure your environment variables in `.env`:**
-
-    ```env
-    # Supabase Configuration (Required)
-    SUPABASE_URL=https://your-project-id.supabase.co
-    SUPABASE_ANON_KEY=your-supabase-anon-key
-    SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-
-    # OpenAI API (Required for RAG Pipeline)
-    OPENAI_API_KEY=your-openai-api-key
-
-    # Security (Required)
-    SECRET_KEY=your-secret-key
-
-    # Optional: External APIs
-    NEWS_API_KEY=your-news-api-key
-    FACT_CHECK_API_KEY=your-fact-check-api-key
-    ```
-
-3. **Get your Supabase credentials:**
-
-    - Go to [Supabase Dashboard](https://supabase.com/dashboard)
-    - Create a new project or select existing one
-    - Go to Settings → API
-    - Copy the Project URL and API keys
-
-4. **Get your OpenAI API key:**
-
-    - Go to [OpenAI Platform](https://platform.openai.com/api-keys)
-    - Create a new API key
-    - Copy the key to your `.env` file
-
-<!-- ## 📝 License
-
-[Add your license information here] -->
-
-<!-- ## 🤝 Contributing
-
-[Add contribution guidelines here] -->
+-   Uses Redis + RQ for async verification task enqueue from post creation.
+-   Supabase client is centralized in `app/utils/supabase_client.py`.
