@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone
 from typing import List
-from rag import RagResponse
+from app.models.rag import RagResponse
 
 
 class Post(BaseModel):
