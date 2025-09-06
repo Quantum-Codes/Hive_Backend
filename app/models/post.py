@@ -8,7 +8,6 @@ from app.models.rag import RagResponse
 class Post(BaseModel):
     owner_id: str
     content: str
-    avatar_user : Optional[str] =None
     #updated_at: Optional[datetime] = None
 
     class Config:
