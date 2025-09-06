@@ -21,13 +21,9 @@ router = APIRouter(
 )
 
 
-
-def polished_str(searchTxt : str):
-    return searchTxt.strip().lower()
-
 @router.get("/search")
 def search_users(name: str = Query(..., description="Search string for username")):
-    search_str = polished_str(name)
+    search_str = name.strip().lower()
 
     if not search_str:
         raise HTTPException(status_code=400, detail="Search string cannot be empty")
@@ -81,7 +77,7 @@ async def login(authorization: Optional[str] = Header(None)):
             "username": username,
             "bio": "Hey there! I am using HIVE right now",
             "profile_pic_url": "",
-            "created_at": datetime.now(timezone.utc)
+            "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
 
         if insert_response.error:
@@ -117,11 +113,3 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(HTTPBea
 def get_current_logged_in_user(user=Depends(get_current_user)):
     return {"message": "User is authenticated.", "user": user}
 
-
-@router.get("/logout")
-def logout_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
-    try:
-        supabase.auth.sign_out() # uses Authorization header
-        return {"message": "User successfully logged out."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
