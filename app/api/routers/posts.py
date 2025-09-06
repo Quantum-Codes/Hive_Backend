@@ -39,7 +39,19 @@ def create_post(
     res = supabase.table('posts').insert(new_post).execute()
     if not res.data:
         raise HTTPException(status_code=400, detail='Error creating the post')
-    task_queue.enqueue(verify_post, post.PostContentRequest(pid=res.data[0]["pid"], content=post_data.content))
+    
+    # Queue verification task with error handling
+    try:
+        task_queue.enqueue(
+            verify_post, 
+            post.PostContentRequest(pid=res.data[0]["pid"], content=post_data.content),
+            job_timeout='10m'  # Set timeout for verification task
+        )
+    except Exception as e:
+        # Log the error but don't fail the post creation
+        print(f"Failed to queue verification task for post {res.data[0]['pid']}: {str(e)}")
+        # Optionally, you could set verification status to error here
+        # supabase.table('posts').update({"verification_status": "error"}).eq("pid", res.data[0]["pid"]).execute()
     return {
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
