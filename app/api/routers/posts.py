@@ -5,8 +5,6 @@ from app.core.supabase import get_supabase_client
 from . import auth
 from datetime import datetime
 from typing import List
-from redis import Redis
-from rq import Queue
 from app.services.verification_service import verify_post
 
 
@@ -14,10 +12,6 @@ router = APIRouter(
     prefix='/post',
     tags=["Posts"]
 )
-
-
-redis_conn = Redis.from_url(settings.redis_url)
-task_queue = Queue(connection=redis_conn)
 
 supabase = get_supabase_client()
 
@@ -41,18 +35,17 @@ def create_post(
     if not res.data:
         raise HTTPException(status_code=400, detail='Error creating the post')
     
-    # Queue verification task with error handling
+    # Run verification directly (synchronous) for now
     try:
-        task_queue.enqueue(
-            verify_post, 
-            post.PostContentRequest(pid=res.data[0]["pid"], content=post_data.content),
-            job_timeout='10m'  # Set timeout for verification task
-        )
+        verify_post(post.PostContentRequest(pid=res.data[0]["pid"], content=post_data.content))
     except Exception as e:
         # Log the error but don't fail the post creation
-        print(f"Failed to queue verification task for post {res.data[0]['pid']}: {str(e)}")
+        print(f"Verification failed for post {res.data[0]['pid']}: {str(e)}")
         # Optionally, you could set verification status to error here
         # supabase.table('posts').update({"verification_status": "error"}).eq("pid", res.data[0]["pid"]).execute()
+    # Get the updated post data with verification status
+    updated_post = supabase.table('posts').select('*').eq('pid', res.data[0]["pid"]).single().execute()
+    
     return {
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
@@ -62,7 +55,7 @@ def create_post(
         "dislikes": 0,
         "score": 0,
         "comments_count": 0,
-        "verification_status": "unverified",
+        "verification_status": updated_post.data.get("verification_status", "unverified"),
         "created_at": res.data[0]["created_at"],
     }
 
@@ -153,3 +146,27 @@ def dislike_post(pid: str, user=Depends(auth.get_current_user)):
     new_dislikes = res.data["dislikes"] + 1
     supabase.table("posts").update({"dislikes": new_dislikes}).eq("pid", pid).execute()
     return {"pid": pid, "dislikes": new_dislikes}
+
+
+@router.post("/{pid}/verify")
+def verify_post_directly(pid: str, user=Depends(auth.get_current_user)):
+    """Test endpoint to verify a post directly without background queue"""
+    try:
+        # Get the post content
+        res = supabase.table("posts").select("content").eq("pid", pid).single().execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Post not found")
+        
+        # Run verification directly
+        result = verify_post(post.PostContentRequest(pid=pid, content=res.data["content"]))
+        
+        # Get updated post data
+        updated_post = supabase.table("posts").select("*").eq("pid", pid).single().execute()
+        
+        return {
+            "message": "Verification completed",
+            "verification_result": result,
+            "updated_post": updated_post.data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")

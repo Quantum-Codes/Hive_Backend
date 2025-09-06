@@ -33,8 +33,8 @@ def get_context(post_data: PostContentRequest):
     """
     try:
         links = get_links(post_data)
+        
         if not links:
-            print(f"No links found for post {post_data.pid}")
             return []
         
         context = []
@@ -66,22 +66,33 @@ def scraperresult_to_context_string(result: ScraperResult) -> str:
         return ""
     
     try:
-     
         title = result.title or "No title"
         summary = result.article_summary or "No summary"
-        date_published = result.date_published or "Unknown date"
         source = result.source or "Unknown source"
         content = result.content or []
         
-        parts = [
-            f"Title: {title}",
-            f"Summary: {summary}",
-            f"Published: {date_published}",
-            f"Source: {source}",
-            "Content:",
-            "\n".join(content) if content else "No content available"
-        ]
-        return "\n".join(parts)
+        # Create a more concise context string
+        context_parts = []
+        
+        # Add title and summary (most important)
+        if title != "No title":
+            context_parts.append(f"Title: {title}")
+        if summary != "No summary":
+            context_parts.append(f"Summary: {summary}")
+        
+        # Add source
+        if source != "Unknown source":
+            context_parts.append(f"Source: {source}")
+        
+        # Add limited content (first few paragraphs)
+        if content:
+            # Limit content to first 3 paragraphs or 500 characters
+            content_text = "\n".join(content[:3])  # First 3 paragraphs
+            if len(content_text) > 500:
+                content_text = content_text[:500] + "..."
+            context_parts.append(f"Content: {content_text}")
+        
+        return "\n".join(context_parts)
     except Exception as e:
         print(f"Error converting scraper result to context string: {str(e)}")
         return f"Error processing content: {str(e)}"
@@ -100,10 +111,36 @@ def verify_post(post_data: PostContentRequest):
     try:
         supabase = get_supabase_client()
         
-      
+        # Get context for verification
         context = get_context(post_data)
         context_strings = [scraperresult_to_context_string(result) for result in context]
         
+        # Limit context size to avoid API payload limits
+        max_context_length = 8000  # Limit total context to ~8KB
+        total_length = sum(len(ctx) for ctx in context_strings)
+        if total_length > max_context_length:
+            print(f"Context too large ({total_length} chars), truncating to {max_context_length} chars")
+            truncated_contexts = []
+            current_length = 0
+            for ctx in context_strings:
+                if current_length + len(ctx) <= max_context_length:
+                    truncated_contexts.append(ctx)
+                    current_length += len(ctx)
+                else:
+                    # Add partial context if there's space
+                    remaining = max_context_length - current_length
+                    if remaining > 100:  # Only add if there's meaningful space
+                        truncated_contexts.append(ctx[:remaining] + "...")
+                    break
+            context_strings = truncated_contexts
+        
+        # If no context found, add a general knowledge context for well-known facts
+        if not context_strings or all(not ctx.strip() for ctx in context_strings):
+            context_strings = [
+                "This is a general knowledge verification context. "
+                "Consider well-known facts, historical events, scientific principles, "
+                "and commonly accepted information when evaluating the claim."
+            ]
 
         request = RagRequest(
             post_id=post_data.pid,
@@ -111,7 +148,6 @@ def verify_post(post_data: PostContentRequest):
             context=context_strings
         )
         
- 
         response = pipeline.verify(request, top_k=4)
         
         # Get the verification status from the response (already a string)
@@ -121,7 +157,6 @@ def verify_post(post_data: PostContentRequest):
         from app.models.rag import RagResponse
         valid_statuses = [status.value for status in RagResponse]
         if verification_status not in valid_statuses:
-            print(f"Warning: Invalid verification status '{verification_status}' for post {post_data.pid}, defaulting to 'unverified'")
             verification_status = 'unverified'
 
         # Update the database with the string value

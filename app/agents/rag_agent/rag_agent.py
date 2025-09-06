@@ -118,7 +118,16 @@ class VerificationRAGPipeline:
 
         prompt = (
             "You are a fact verification assistant. Classify the claim based on the context and answer. "
-            f"Choose one of: {', '.join(label_options)}.\n"
+            f"Choose one of: {', '.join(label_options)}.\n\n"
+            "Classification guidelines:\n"
+            "- 'verified': Claim is factually correct and supported by evidence\n"
+            "- 'unverified': Insufficient evidence to determine truth\n"
+            "- 'misinformation': Claim is demonstrably false\n"
+            "- 'factual_error': Claim contains factual inaccuracies\n"
+            "- 'personal_opinion': Claim is subjective opinion, not factual\n"
+            "- 'other': Does not fit other categories\n\n"
+            "For well-known facts (historical events, scientific facts, geography, etc.), "
+            "classify as 'verified' even without extensive context.\n\n"
             "Return ONLY a compact JSON object with keys: label, confidence (0-1), rationale. "
             "Do not include code fences, backticks, or any extra prose.\n"
             f"Claim: {query}\n"
