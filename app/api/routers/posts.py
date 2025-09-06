@@ -39,12 +39,12 @@ def create_post(
     res = supabase.table('posts').insert(new_post).execute()
     if not res.data:
         raise HTTPException(status_code=400, detail='Error creating the post')
-    task_queue.enqueue(verify_post, post.PostContentRequest(pid=post_data.pid, content=post_data.content))
+    task_queue.enqueue(verify_post, post.PostContentRequest(pid=res.data[0]["pid"], content=post_data.content))
     return {
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
         "owner_id": user["uid"],
-        "author_display_name": user.get("username"),
+        "author_name": user.get("username"),
         "likes": 0,
         "dislikes": 0,
         "score": 0,
