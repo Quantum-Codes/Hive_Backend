@@ -33,7 +33,7 @@ def create_post(
         'created_at': datetime.utcnow().isoformat(),
         'likes': 0,
         'dislikes': 0,
-        'is_verified': False,
+        "verification_status": rag.RagResponse.UNVERIFIED,
     }
 
     res = supabase.table('posts').insert(new_post).execute()
