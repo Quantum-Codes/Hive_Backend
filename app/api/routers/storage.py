@@ -35,10 +35,11 @@ async def upload_profile_pic(
             .execute()
         )
 
-        if update_response.error:
+        if not update_response or not getattr(update_response, "data", None):
+            print(update_response)
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to update profile picture: {update_response.error.message}",
+                detail="Failed to update profile picture."
             )
 
         return {"profile_pic_url": url}

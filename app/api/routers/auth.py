@@ -77,7 +77,8 @@ async def login(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()
             "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
 
-        if insert_response.error:
+        if not insert_response or not getattr(insert_response, "data", None):
+            print(insert_response)
             raise HTTPException(status_code=500, detail=insert_response.error.message)
 
         return {"message": "User created successfully", "uid": uid}
