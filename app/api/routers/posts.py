@@ -33,18 +33,18 @@ def create_post(
         'created_at': datetime.utcnow().isoformat(),
         'likes': 0,
         'dislikes': 0,
-        'is_verified': False,
+        "verification_status": rag.RagResponse.UNVERIFIED,
     }
 
     res = supabase.table('posts').insert(new_post).execute()
     if not res.data:
         raise HTTPException(status_code=400, detail='Error creating the post')
-    task_queue.enqueue(verify_post, post.PostContentRequest(pid=post_data.pid, content=post_data.content))
+    task_queue.enqueue(verify_post, post.PostContentRequest(pid=res.data[0]["pid"], content=post_data.content))
     return {
         "pid": res.data[0]["pid"],
         "content": res.data[0]["content"],
         "owner_id": user["uid"],
-        "author_display_name": user.get("username"),
+        "author_name": user.get("username"),
         "likes": 0,
         "dislikes": 0,
         "score": 0,
@@ -53,18 +53,33 @@ def create_post(
         "created_at": res.data[0]["created_at"],
     }
 
+
+def insert_author_name(posts: List[dict]) -> List[dict]:
+    for post in posts:
+        user_res = supabase.table('users').select('username, full_name, profile_pic_url').eq('uid', post['owner_id']).single().execute()
+        if user_res.data:
+            post['author_name'] = user_res.data.get('username')
+            post['author_display_name'] = user_res.data.get('full_name')
+            post['author_avatar'] = user_res.data.get('profile_pic_url')
+        else:
+            post['author_name'] = 'Unknown'
+            post['author_display_name'] = None
+            post['author_avatar'] = None
+    
+    return posts
+
 #  Get all posts
 @router.get('/', response_model=List[post.ShowPost])
 def get_all_posts():
     res = supabase.table('posts').select('*').execute()
-    return res.data
+    return insert_author_name(res.data)
 
 
 #  Get user's posts
 @router.get('/users/{uid}/posts', response_model=List[post.ShowPost])
 def user_posts(uid: str):
     res = supabase.table('posts').select('*').eq('owner_id', uid).execute()
-    return res.data
+    return insert_author_name(res.data)
 
 
 #  Get single post by pid
@@ -73,7 +88,7 @@ def get_single_post(pid: str):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Post not found")
-    return res.data
+    return insert_author_name([res.data])
 
 
 #  Delete post
@@ -101,7 +116,7 @@ def update_post(
         'content': post_content,
     }).eq('pid', pid).execute()
 
-    return updated.data[0]
+    return insert_author_name([updated.data[0]])
 
 
 
