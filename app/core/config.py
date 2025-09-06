@@ -147,6 +147,7 @@ class Settings(BaseSettings):
     host: str = os.getenv("HOST", "0.0.0.0")
     port: int = int(os.getenv("PORT", "8000"))
     reload: bool = os.getenv("RELOAD", "True").lower() == "true"
+    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
     # Sub-settings
     supabase: SupabaseSettings = SupabaseSettings()

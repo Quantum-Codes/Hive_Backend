@@ -15,18 +15,16 @@ Hive_Backend/
 │   ├── api/
 │   │   ├── __init__.py
 │   │   └── routers/
-│   │       ├── routes.py                # placeholder
-│   │       ├── post_routes.py           # posts CRUD, reactions, listing
+│   │       ├── posts.py           # posts CRUD, reactions, listing
 │   │       ├── storage.py               # uploads to Supabase Storage
-│   │       └── user_auth.py             # Supabase OAuth, JWT auth helpers
+│   │       └── auth.py             # Supabase OAuth, JWT auth helpers
 │   ├── core/
 │   │   ├── __init__.py
 │   │   └── config.py                    # settings (Supabase, Gemini, Chroma, etc.)
 │   ├── models/
 │   │   ├── __init__.py
-│   │   ├── databases.py                 # (placeholder)
 │   │   ├── rag.py                       # RagRequest/Response enums
-│   │   ├── schemas.py                   # User, Post, Comment, ShowPost, tokens
+│   │   ├── post.py                   # User, Post, Comment, ShowPost, tokens
 │   │   └── scraper.py                   # ScraperResult
 │   ├── agents/
 │   │   ├── __init__.py
@@ -38,11 +36,9 @@ Hive_Backend/
 │   │       └── rag_agent.py             # Gemini + Chroma pipeline
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── post_service.py              # (placeholder)
 │   │   └── verification_service.py      # verification orchestration
 │   └── utils/
 │       ├── __init__.py
-│       ├── helpers.py                   # (placeholder)
 │       └── supabase_client.py           # client factory (anon/admin)
 ├── tests/
 │   ├── __init__.py
@@ -62,12 +58,13 @@ Hive_Backend/
 
 ### Environment Setup
 
-1. Create and activate a virtual environment (recommended)
+1. Create and activate a virtual environment + install redis (recommended)
 
     ```bash
     python3 -m venv venv
     source venv/bin/activate
     pip install -r requirements.txt
+    sudo apt-get install redis-server
     ```
 
     Or with Poetry:
@@ -89,6 +86,7 @@ Hive_Backend/
 ## ▶️ Running the Server
 
 ```bash
+sudo service redis-server start
 uvicorn app.main:app --reload
 ```
 
@@ -116,7 +114,6 @@ Use the Supabase session JWT as the Bearer token for authenticated routes.
 ## 🗃️ Storage
 
 -   POST `/storage/upload/profile-pic` → upload profile picture, updates `users.profile_pic_url`
--   POST `/storage/upload/media` → upload post media, returns `media_url` (also inserts minimal post row)
 
 ## 📝 Posts API
 

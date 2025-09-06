@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from app.models import post, rag
+from app.core.config import settings
 from app.core.supabase import get_supabase_client
 from . import auth
 from datetime import datetime
@@ -15,7 +16,7 @@ router = APIRouter(
 )
 
 
-redis_conn = Redis(host='localhost', port=6379)
+redis_conn = Redis.from_url(settings.redis_url)
 task_queue = Queue(connection=redis_conn)
 
 supabase = get_supabase_client()
