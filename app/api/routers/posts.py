@@ -88,7 +88,7 @@ def get_single_post(pid: str):
     res = supabase.table('posts').select('*').eq('pid', pid).single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Post not found")
-    return insert_author_name([res.data])
+    return insert_author_name([res.data])[0]
 
 
 #  Delete post
@@ -116,7 +116,7 @@ def update_post(
         'content': post_content,
     }).eq('pid', pid).execute()
 
-    return insert_author_name([updated.data[0]])
+    return insert_author_name([updated.data[0]])[0]
 
 
 
