@@ -278,3 +278,22 @@ This project was developed collaboratively by:
 ├─ Storage        │    └─ Content Analysis │    └─ Document Store │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
+
+## 📄 Implementation Notes
+
+- **Verification Process**: Currently runs synchronously during post creation for immediate feedback
+- **Database**: Uses Supabase PostgreSQL with real-time subscriptions
+- **Authentication**: Leverages Supabase Auth with Google OAuth integration  
+- **AI Integration**: Google Gemini provides content analysis and verification
+- **Vector Storage**: ChromaDB handles document embeddings and similarity search
+- **Configuration**: Centralized settings management with environment-based configuration
+- **Error Handling**: Robust error handling with fallback verification statuses
+
+## 🚀 Future Enhancements
+
+- **Async Processing**: Background task queues for better scalability
+- **Multiple AI Models**: Support for additional AI providers
+- **Advanced Scraping**: Enhanced content extraction from various sources
+- **Real-time Updates**: WebSocket integration for live verification updates
+- **Caching Layer**: Redis integration for improved performance
+- **Monitoring**: Application performance monitoring and logging
