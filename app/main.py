@@ -35,5 +35,5 @@ async def test_config():
         "environment": settings.environment,
         "debug": settings.debug,
         "supabase_configured": bool(settings.supabase.url and settings.supabase.anon_key),
-        "openai_configured": bool(settings.openai.api_key),
+        "gemini_configured": bool(settings.gemini.api_key),
     }
