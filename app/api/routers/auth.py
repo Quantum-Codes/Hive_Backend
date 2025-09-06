@@ -37,15 +37,12 @@ def search_users(name: str = Query(..., description="Search string for username"
 
 
 @router.post("/defaults")
-async def login(authorization: Optional[str] = Header(None)):
+async def login(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     """
     Create user profile from JWT token if it doesn't exist.
     This endpoint is called after successful OAuth authentication.
     """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=400, detail="Authorization header missing or invalid")
-
-    token = authorization.split(" ")[1]
+    token = credentials.credentials
     
     try:
         # Use standardized token validation
