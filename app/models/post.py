@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone
 from typing import List
-from app.models.rag import RagResponse
 
 
 class Post(BaseModel):
@@ -45,7 +44,7 @@ class ShowPost(BaseModel):
     tags: Optional[List[str]] = []
 
     # Verification / Moderation
-    verification_status: RagResponse = RagResponse.UNVERIFIED
+    verification_status: str = "unverified"
 
     # Timestamps
     created_at: datetime

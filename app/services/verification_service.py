@@ -114,23 +114,17 @@ def verify_post(post_data: PostContentRequest):
  
         response = pipeline.verify(request, top_k=4)
         
-     
+        # Get the verification status from the response (already a string)
         verification_status = response.get('status', 'unverified')
         
-
+        # Validate that the status is one of the expected values
         from app.models.rag import RagResponse
-        try:
-        
-            if isinstance(verification_status, str):
-                enum_status = RagResponse(verification_status)
-            else:
-                enum_status = verification_status
-        except ValueError:
-       
-            enum_status = RagResponse.UNVERIFIED
-            verification_status = enum_status.value
-        
+        valid_statuses = [status.value for status in RagResponse]
+        if verification_status not in valid_statuses:
+            print(f"Warning: Invalid verification status '{verification_status}' for post {post_data.pid}, defaulting to 'unverified'")
+            verification_status = 'unverified'
 
+        # Update the database with the string value
         update_result = supabase.table('posts').update({
             "verification_status": verification_status,
         }).eq("pid", post_data.pid).execute()
@@ -143,18 +137,18 @@ def verify_post(post_data: PostContentRequest):
     except Exception as e:
         print(f"Error during verification for post {post_data.pid}: {str(e)}")
         
-   
+        # Update database with error status
         try:
             supabase = get_supabase_client()
             supabase.table('posts').update({
-                "verification_status": RagResponse.UNVERIFIED.value,
+                "verification_status": "unverified",
             }).eq("pid", post_data.pid).execute()
         except Exception as db_error:
             print(f"Failed to update error status in database: {str(db_error)}")
         
-   
+        # Return error response
         return {
-            "status": RagResponse.UNVERIFIED.value,
+            "status": "unverified",
             "confidence": 0.0,
             "answer": "Verification failed due to an error",
             "supporting_context": [],

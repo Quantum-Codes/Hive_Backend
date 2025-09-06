@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from app.models import post, rag
+from app.models import post
 from app.core.config import settings
 from app.core.supabase import get_supabase_client
 from . import auth
@@ -34,7 +34,7 @@ def create_post(
         'created_at': datetime.utcnow().isoformat(),
         'likes': 0,
         'dislikes': 0,
-        "verification_status": rag.RagResponse.UNVERIFIED,
+        "verification_status": "unverified",
     }
 
     res = supabase.table('posts').insert(new_post).execute()
@@ -62,7 +62,7 @@ def create_post(
         "dislikes": 0,
         "score": 0,
         "comments_count": 0,
-        "verification_status": rag.RagResponse.UNVERIFIED,
+        "verification_status": "unverified",
         "created_at": res.data[0]["created_at"],
     }
 
